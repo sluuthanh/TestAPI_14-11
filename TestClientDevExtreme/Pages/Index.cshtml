@@ -1,0 +1,106 @@
+﻿@page
+@using TestClientDevExtreme.Models
+
+<h2>Home</h2>
+
+<script>
+var dxPopup = null;
+var dxForm = null;
+$(document).ready(function(){
+    dxDataGrid = $("#dataGrid").dxDataGrid("instance");
+    dxPopup =  $("#create-popup").dxPopup("instance");
+    dxPopupUpdate =  $("#update-popup").dxPopup("instance");
+   
+})
+function popUpCreateNew() {
+     dxPopup.show();
+}
+function update_test() {
+
+}
+
+function delete_test() {
+
+}
+
+function Update() {
+
+}
+
+function HidePopupQuickInput() {
+
+}
+</script>
+
+@*Popup Tạo mới*@
+<div>
+    @(Html.DevExtreme().Popup().ToolbarItems(t =>
+    {
+        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+            .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Update").Icon("save").Text("Lưu"));
+        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+            .Widget(w => w.Button().Type(ButtonType.Danger)
+            .OnClick("HidePopupQuickInput").Icon("close").Text("Đóng"));
+    })
+         .ID("dxPopupInput")
+        .ShowTitle(true)
+        .Height("100%")
+        .Title("Hỗ trợ nhập liệu nhanh")
+        .DragEnabled(false)
+        .ShowCloseButton(true)
+        .CloseOnOutsideClick(false)
+        .ContentTemplate("")
+        )
+</div>
+@(Html.DevExtreme().DataGrid<Student>()
+    .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").Key("SchedulerId"))
+    .Columns(columns => {
+        columns.AddFor(m => m.Name);
+        columns.AddFor(m => m.ClassStudent);
+        columns.AddFor(m => m.DoB);
+        columns.AddFor(m => m.CityId)
+            .Lookup(l=>l
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").Key("Id"))
+                .ValueExpr("Id").DisplayExpr("City1"))
+            .AllowEditing(true);
+        columns.AddFor(m => m.DistrictId)
+            .Lookup(l=>l
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrict").Key("Id"))
+                .ValueExpr("Id").DisplayExpr("District1"))
+            .AllowEditing(true);
+        columns.Add().Caption("Action")
+            .Type(GridCommandColumnType.Buttons)
+            .Buttons(b=>{
+                b.Add().Icon("edit").Text("edit").OnClick("update_test");
+                b.Add().Icon("close").Hint("remove").OnClick("delete_test");
+            });
+    })
+     .Toolbar(t=>{
+        t.Items(i=>{
+            i.Add().Name(DataGridToolbarItem.GroupPanel);
+            i.Add().Name(DataGridToolbarItem.SearchPanel);
+            i.Add().Name(DataGridToolbarItem.ColumnChooserButton);
+            i.Add().Location(ToolbarItemLocation.After).Widget(w=>w.Button().Text("Create new").ID("btnCreate").Type(ButtonType.Success).OnClick("popUpCreateNew"));
+        });
+    })
+    .ShowBorders(true)
+    .ShowRowLines(true)
+    .Paging(p => p.PageSize(10))
+    .FilterRow(f => f.Visible(true))
+    .HeaderFilter(f => f.Visible(true))
+    .SearchPanel(e => e.Visible(true))
+    .ColumnChooser(c => c.Enabled(true).Mode(GridColumnChooserMode.Select).Title("Chọn cột").AllowSearch(true))
+    .FilterPanel(filterPanel => filterPanel.Visible(true))
+    .FilterRow(filterRow => filterRow.Visible(true))
+    .GroupPanel(p => p.Visible(true))
+    .Grouping(g => g.AutoExpandAll(false))
+    .RemoteOperations(true)
+    @* .Summary(s => s
+        .TotalItems(totalItems => {
+            totalItems.AddFor(m => m.ShipCity).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems => {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+    )*@
+)
