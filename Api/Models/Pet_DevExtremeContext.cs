@@ -31,7 +31,7 @@ namespace Api.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Server=.;Database=Pet_DevExtreme;uid=sa;pwd=sa;");
+                optionsBuilder.UseSqlServer("Server=.;Database=Pet_DevExtreme;uid=sa;pwd=sa");
             }
         }
 
@@ -121,6 +121,18 @@ namespace Api.Models
                 entity.Property(e => e.CityId).HasColumnName("city_id");
 
                 entity.Property(e => e.DistrictId).HasColumnName("district_id");
+
+                entity.Property(e => e.DoB).HasColumnType("date");
+
+                entity.HasOne(d => d.City)
+                    .WithMany(p => p.Students)
+                    .HasForeignKey(d => d.CityId)
+                    .HasConstraintName("FK_Student_City");
+
+                entity.HasOne(d => d.District)
+                    .WithMany(p => p.Students)
+                    .HasForeignKey(d => d.DistrictId)
+                    .HasConstraintName("FK_Student_district");
             });
 
             modelBuilder.Entity<TestDb>(entity =>

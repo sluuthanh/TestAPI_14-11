@@ -31,7 +31,8 @@ namespace TestClientDevExtreme.Controllers
         public object GetCity(DataSourceLoadOptions loadOptions)
         {
             List<City> result = null;
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 var response = await client.GetAsync(uri + "/GetCity");
                 var body = await response.Content.ReadAsStringAsync();
                 result = JsonConvert.DeserializeObject<List<City>>(body);
@@ -53,26 +54,26 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
-        [HttpGet("GetCityDistrict")]
-        public object GetCityDistrict(DataSourceLoadOptions loadOptions)
+        [HttpGet("GetDistrictByCity")]
+        public object GetCityDistrict(DataSourceLoadOptions loadOptions,int cityId)
         {
-            List<CityDistrict> result = null;
+            List<District> result = null;
             Task.Run(async () => {
-                var response = await client.GetAsync(uri + "/GetCityDistrict");
+                var response = await client.GetAsync(uri + $"/GetDistrictByCity/{cityId}");
                 var body = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<List<CityDistrict>>(body);
+                result = JsonConvert.DeserializeObject<List<District>>(body);
             }).Wait();
             return DataSourceLoader.Load((dynamic)result, loadOptions);
         }
 
-        [HttpPost("Insert")]
+        [HttpPost("Create")]
         public object Insert(string search)
         {
             Student result = null;
             StringContent content = new StringContent(search, Encoding.UTF8, "application/json");
             Task.Run(async () =>
             {
-                var response = await client.PostAsync(uri , content);
+                var response = await client.PostAsync(uri + "/Create", content);
                 var body = await response.Content.ReadAsStringAsync();
                 result = JsonConvert.DeserializeObject<Student>(body);
             }).Wait();
@@ -80,15 +81,15 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
-        [HttpPost("Update")]
-        public object Update(string search)
+        [HttpPost("UpdateStudent")]
+        public object UpdateStudent(string search)
         {
             Student result = null;
             //result = null;
             StringContent content = new StringContent(search, Encoding.UTF8, "application/json");
             Task.Run(async () =>
             {
-                var response = await client.PutAsync(uri, content);
+                var response = await client.PutAsync(uri + "/Put", content);
                 var body = await response.Content.ReadAsStringAsync();
                 result = JsonConvert.DeserializeObject<Student>(body);
             }).Wait();

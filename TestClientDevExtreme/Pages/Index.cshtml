@@ -4,55 +4,370 @@
 <h2>Home</h2>
 
 <script>
-var dxPopup = null;
+var dxPopup = null; var dxFormObject = null;
 var dxForm = null;
+var dxPopupUpdate = null;
+var dxPopupCreate = null;
+var keyObjectUpdate = null;
+var f = null;
 $(document).ready(function(){
     dxDataGrid = $("#dataGrid").dxDataGrid("instance");
-    dxPopup =  $("#create-popup").dxPopup("instance");
+    dxPopupCreate =  $("#create-popup").dxPopup("instance");
     dxPopupUpdate =  $("#update-popup").dxPopup("instance");
    
 })
 function popUpCreateNew() {
-     dxPopup.show();
+     dxPopupCreate.show();
+    dxForm = $("#formCreate").dxForm("instance")
+    debugger
+    dxForm.option("dataSource", null);
+    dxForm.getEditor("Name").option("value",null);
+    dxForm.getEditor("DoB").option("value",null);
+    dxForm.getEditor("ClassStudent").option("value",null);
+    dxForm.getEditor("CityId").option("value",null);
+          keyObjectUpdate = null;
 }
-function update_test() {
 
+function Create() {
+    var dxFormxx = $("#formCreate").dxForm("instance").option("formData");
+           
+    var newObject = {
+        "Name" : dxFormxx.Name,
+        "DoB" : dxFormxx.DoB,
+        "ClassStudent" : dxFormxx.ClassStudent,
+        "CityId" : dxFormxx.CityId,
+        "DistrictId" : dxFormxx.DistrictId
+    }
+    var parameter = {search : JSON.stringify(newObject)}
+    $.ajax({
+            url: "/Tests/Create",
+            dataType: "json",
+            type: "POST",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            async: false,
+            cache: false,
+            data: parameter
+        }).done(function (rs) {
+            DevExpress.ui.dialog.alert("Tạo mới thành công!", "Thông báo!");
+            dxPopupCreate.hide();
+            dxDataGrid.refresh();
+        });
 }
 
-function delete_test() {
-
+function update_student(e) {
+    dxPopupUpdate.show();
+    keyObjectUpdate = e.row.key;
+    dxFormObject = $("#formUpdate").dxForm("instance");
+    dxFormObject.getEditor("Name").option("value", e.row.data.Name)
+    dxFormObject.getEditor("DoB").option("value", e.row.data.DoB)
+    dxFormObject.getEditor("ClassStudent").option("value", e.row.data.ClassStudent)
+    dxFormObject.getEditor("CityId").option("value", e.row.data.CityId)
+    dxFormObject.getEditor("DistrictId").option("value", e.row.data.DistrictId)
 }
 
 function Update() {
+    var dxFormxx = $("#formUpdate").dxForm("instance").option("formData");
+    var newObject = {
+        "SchedulerId" : keyObjectUpdate,
+        "Name" : dxFormxx.Name,
+        "DoB" : dxFormxx.DoB,
+        "ClassStudent" : dxFormxx.ClassStudent,
+        "CityId" : dxFormxx.CityId,
+        "DistrictId" : dxFormxx.DistrictId
+    }
+    var parameter = {search : JSON.stringify(newObject)}
+    $.ajax({
+            url: "/Tests/UpdateStudent",
+            dataType: "json",
+            type: "POST",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            async: false,
+            cache: false,
+            data: parameter
+        }).done(function (rs) {
+            DevExpress.ui.dialog.alert("Cập nhật thành công!", "Thông báo!");
+            //dxDataGrid = $("#dataGrid").dxDataGrid("instance");
+            //dxPopupUpdate =  $("#update-popup").dxPopup("instance");
+            dxPopupUpdate.hide();
+            dxDataGrid.refresh();
+          
+        });
+}
+
+function delete_student() {
 
 }
 
-function HidePopupQuickInput() {
 
+function HidePopupUpdate() {
+      var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn đóng? </i>", "Cảnh báo !!!");
+        result.done(function (dialogResult) {
+            if (dialogResult == true) {
+                isEdit = false;
+              
+                dxPopupUpdate.hide();
+            }
+        })
+}
+
+
+function HidePopupCreate() {
+      var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn đóng? </i>", "Cảnh báo !!!");
+        result.done(function (dialogResult) {
+            if (dialogResult == true) {
+                isEdit = false;
+               
+                dxPopupCreate.hide();
+            }
+        })
+}
+
+function City_ValueChanged(e) {
+    if (keyObjectUpdate > 0) {
+        dxFormObject = $("#formUpdate").dxForm("instance");
+        dxFormObject.getEditor("DistrictId").getDataSource().reload();
+        dxFormObject.getEditor("DistrictId").option('value', null);
+    } else {
+        dxFormObject = $("#formCreate").dxForm("instance");
+        dxFormObject.getEditor("DistrictId").getDataSource().reload();
+        dxFormObject.getEditor("DistrictId").option('value', null);
+    }
+   
+}
+
+function GetCityId() {
+     if (keyObjectUpdate > 0) {
+        dxFormGetCity = $("#formUpdate").dxForm("instance").option("formData");
+    } else {
+        dxFormGetCity = $("#formCreate").dxForm("instance").option("formData");
+    }
+        return dxFormGetCity.CityId;
 }
 </script>
 
-@*Popup Tạo mới*@
-<div>
-    @(Html.DevExtreme().Popup().ToolbarItems(t =>
+
+@*Tìm kiếm dữ liệu*@
+<div class="page-body">
+    <div class="card-custom">
+        <div class="card-header-custom row">
+            <div class="col-md-8">
+                <h5>Bộ lọc</h5>
+            </div>
+            <div class="col-md-4">
+                <div class="card-header-right-custom">
+                    <ul class="list-unstyled card-option">
+                        <li><i class="feather icon-maximize full-card"></i></li>
+                        <li>
+                            <i class="feather icon-minus minimize-card"></i>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>       
+
+        <div class="card-block table-border-style">            
+           @* @(Html.DevExtreme().Form<LoanSearchDto>().ID("dxFormSearch").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+                    .Items(items => //LoanSearchDto
+                    {
+                        items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
+                            .Items(grItem =>
+                            {
+                                grItem.AddSimpleFor(m => m.BranchCode)
+                                    .Editor(e => e.SelectBox().Disabled(false).SearchEnabled(true).DataSource(d => d.Mvc().Controller("Branch").LoadMode(DataSourceLoadMode.Raw)
+                                    .LoadAction("GetBranchs").Key("BranchCode")).Placeholder("Chi nhánh").ValueExpr("BranchCode").DisplayExpr("BranchName").OnSelectionChanged("BranchCode_ValueChanged"));
+
+                                grItem.AddSimpleFor(m => m.ClusterTypeCode)
+                                    .Editor(e => e.SelectBox()  .DataSource(d => d.Mvc().Controller("Cluster")
+                                    .LoadMode(DataSourceLoadMode.Raw)
+                                    .LoadAction("ClusterTypeCode").Key("ClusterTypeCode")).Placeholder("Loại hình")
+                                    .Hint("Không chọn mặc định lấy tất cả").ValueExpr("ClusterTypeCode")
+                                    .DisplayExpr("ClusterTypeName").OnSelectionChanged("ClusterType_ValueChanged").ShowClearButton(true));
+
+                                grItem.AddSimpleFor(m => m.BranchStaffId)
+                                     .Editor(e => e.SelectBox().SearchEnabled(true).DataSource(d => d.Mvc().Controller("BranchStaff")
+                                     .LoadAction("GetByBranchCode").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { branchcode = new JS("GetBranchCode") }).Key("Id"))
+                                     .ValueExpr("Id").DisplayExpr("Fullname").Placeholder("chọn nhân viên...")
+                                     .Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true).OnSelectionChanged("BranchStaff_ValueChanged"));
+                            });
+                        items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
+                            .Items(grItem =>
+                            {
+                                grItem.AddSimpleFor(m => m.ClusterCode)
+                                    .Editor(e => e.DropDownBox()
+                                    .DataSource(d => d.Mvc().Controller("Cluster").LoadAction("GetComboboxCluster").LoadMethod("POST").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchCluster") }).Key("ClusterCode"))
+                                    .ValueExpr("ClusterCode").DisplayExpr("ClusterName").Placeholder("chọn đơn vị...").Hint("Không chọn mặc định lấy tất cả").OnValueChanged("ClusterCode_ValueChanged").ContentTemplate(new TemplateName("ContentTemplate_Cluster")));
+
+                                grItem.AddSimpleFor(m => m.GroupCode)
+                                    .Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("Group").LoadAction("GetGroupByCluster").LoadParams(new { clusterCode = new JS("GetClusterCode") }).Key("GroupCode"))
+                                    .ValueExpr("GroupCode").DisplayExpr("GroupName").Placeholder("Chọn nhóm...").Hint("Không chọn mặc định lấy tất cả").OnValueChanged("GroupCode_ValueChanged").ShowClearButton(true));
+
+                                grItem.AddSimpleFor(m => m.DocumentStatusId)
+                                    .Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("Metadata").LoadAction("GetMetadataLoader")
+                                    .LoadMode(DataSourceLoadMode.Raw).LoadParams(new { grouptext = "LOANDOCUMENTSTATUS" }).Key("Id"))
+                                    .ValueExpr("ItemId").DisplayExpr("ItemText").Placeholder("Chọn trạng thái...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true));
+
+                                grItem.AddSimpleFor(m => m.DocumentGroup).Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("LoanDocument").LoadAction("GetListDocumentGroup")
+                                        .LoadMode(DataSourceLoadMode.Processed)
+                                        .LoadParams(new { searchOptions = new JS("GetDocumentGroup") })
+                                        //.Key("Id")
+                                        )
+                                        //.ValueExpr("ItemId").DisplayExpr("ItemText")
+                                        .Placeholder("Chọn trạng thái...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true));
+                            });
+                        items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(6).Lg(8))
+                            .Items(grItem =>
+                            {
+                                grItem.AddButton().ButtonOptions(e => e.OnClick("Search_Click").ID("btnSearch").Type(ButtonType.Success).Disabled(false).UseSubmitBehavior(false).Text("Tìm kiếm").Width("100%").Type(ButtonType.Success));
+                                grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("100%").Type(ButtonType.Normal));
+                            });
+                    })
+                )    *@        
+        </div>
+    </div>
+  @*  @using (Html.DevExtreme().NamedTemplate("ContentTemplate_Cluster"))
     {
-        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-            .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Update").Icon("save").Text("Lưu"));
-        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-            .Widget(w => w.Button().Type(ButtonType.Danger)
-            .OnClick("HidePopupQuickInput").Icon("close").Text("Đóng"));
-    })
-         .ID("dxPopupInput")
+        @(Html.DevExtreme().DataGrid<ClusterModel>()
+            .DataSource(new JS(@"component.getDataSource()"))
+            .ID("ClusterCode_embedded_datagrid")
+            .Columns(c =>
+            {
+                c.AddFor(e => e.ClusterCode).AllowResizing(true);
+                c.AddFor(e => e.ClusterName);
+            })
+                .ColumnAutoWidth(true)
+            .FilterRow(f => f.Visible(true))
+            .SearchPanel(S => S.Visible(true).SearchVisibleColumnsOnly(true))
+            .Scrolling(s => s.Mode(GridScrollingMode.Virtual))
+            .HoverStateEnabled(true)
+            .Selection(s => s.Mode(SelectionMode.Single))
+            .FocusedRowEnabled(true)
+            .FocusedRowKey(new JS("component.option('value')"))
+            .OnRowClick(@<text>
+                        function(selectedItems) {                          
+                            var data = selectedItems.data;                           
+                            component.option("value", data.ClusterCode);
+                            component.close();    
+                            Cluster_ValueChanged(data.ClusterCode);                           
+                        }
+            </text>)
+
+            )
+    }*@
+</div>
+
+@*Popup Tạo mới*@
+
+<div>
+    @(Html.DevExtreme().Popup()
+        .ToolbarItems(t =>
+        {
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Create").Icon("save").Text("Lưu"));
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+                .Widget(w => w.Button().Type(ButtonType.Danger)
+                .OnClick("HidePopupCreate").Icon("close").Text("Đóng"));
+        })
+        .ID("create-popup")
         .ShowTitle(true)
         .Height("100%")
-        .Title("Hỗ trợ nhập liệu nhanh")
+        .Title("Create new")
         .DragEnabled(false)
-        .ShowCloseButton(true)
+        .ShowCloseButton(false)
         .CloseOnOutsideClick(false)
-        .ContentTemplate("")
+        .ContentTemplate(new TemplateName("form-create-template"))
         )
 </div>
-@(Html.DevExtreme().DataGrid<Student>()
+
+
+@using (Html.DevExtreme().NamedTemplate("form-create-template")) {
+    @(Html.DevExtreme().Form<Student>().LabelLocation(FormLabelLocation.Top)
+        .Items(i=>{
+            i.AddSimpleFor(m=>m.Name).Editor(e=>e.TextBox());
+            i.AddSimpleFor(m=>m.DoB).Editor(e=>e.DateBox().DisplayFormat("dd/MM/yyyy").Value(DateTime.Now.Date).ShowClearButton(true));
+            i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
+    @*i.AddSimpleFor(m=>m.HinhAnh).Editor(e=>e.TextBox());*@
+            i.AddSimpleFor(m=>m.CityId)
+                .Editor(e=>e.SelectBox().SearchEnabled(true)
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+                .ValueExpr("Id").DisplayExpr("City1").OnValueChanged("City_ValueChanged").Placeholder("chọn City...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+            );
+            i.AddSimpleFor(m=>m.DistrictId)
+            .Editor(e=>e.SelectBox().SearchEnabled(true)
+            .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrictByCity").LoadParams(new {cityId = new JS("GetCityId") }).LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+            .ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+            );
+    @* i.AddSimpleFor(m=>m.Name)
+                .Editor(e=>e.DropDownBox()
+                .DataSource(d=>d.Mvc().Controller("Student").LoadAction("GetSampleData").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).Key("OrderID"))
+                .ValueExpr("CustomerName").DisplayExpr("CustomerName").Placeholder("chọn ten...").Hint("Không chọn mặc định lấy tất cả")
+                );*@
+    @*    i.AddSimpleFor(m=>m.Description).Editor(e=>e.TextArea());*@
+        })
+        .ID("formCreate")
+        .LabelMode(FormLabelMode.Floating)
+        .LabelLocation(FormLabelLocation.Left)
+        .MinColWidth(300)
+        .ReadOnly(false)
+        .ShowColonAfterLabel(true)
+    )
+}
+
+
+<div>
+    @(Html.DevExtreme().Popup()
+        .ToolbarItems(t =>
+        {
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Update").Icon("save").Text("Lưu"));
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+                .Widget(w => w.Button().Type(ButtonType.Danger)
+                .OnClick("HidePopupUpdate").Icon("close").Text("Đóng"));
+        })
+        .ID("update-popup")
+        .ShowTitle(true)
+        .Height("100%")
+        .Title("Update")
+        .DragEnabled(false)
+        .ShowCloseButton(false)
+        .CloseOnOutsideClick(false)
+        .ContentTemplate(new TemplateName("form-update-template"))
+        )
+</div>
+
+@using (Html.DevExtreme().NamedTemplate("form-update-template")) {
+    @(Html.DevExtreme().Form<Student>().LabelLocation(FormLabelLocation.Top)
+        .Items(i=>{
+            i.AddSimpleFor(m=>m.Name).Editor(e=>e.TextBox());
+            i.AddSimpleFor(m=>m.DoB).Editor(e=>e.DateBox().DisplayFormat("dd/MM/yyyy").Value(DateTime.Now.Date).ShowClearButton(true));
+            i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
+    @*i.AddSimpleFor(m=>m.HinhAnh).Editor(e=>e.TextBox());*@
+            i.AddSimpleFor(m=>m.CityId)
+                .Editor(e=>e.SelectBox().SearchEnabled(true)
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+                .ValueExpr("Id").DisplayExpr("City1").OnValueChanged("City_ValueChanged").Placeholder("chọn City...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+            );
+            i.AddSimpleFor(m=>m.DistrictId)
+            .Editor(e=>e.SelectBox().SearchEnabled(true)
+            .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrictByCity").LoadParams(new {cityId = new JS("GetCityId") }).LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+            .ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+            );
+    @* i.AddSimpleFor(m=>m.Name)
+                .Editor(e=>e.DropDownBox()
+                .DataSource(d=>d.Mvc().Controller("Student").LoadAction("GetSampleData").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).Key("OrderID"))
+                .ValueExpr("CustomerName").DisplayExpr("CustomerName").Placeholder("chọn ten...").Hint("Không chọn mặc định lấy tất cả")
+                );*@
+    @*    i.AddSimpleFor(m=>m.Description).Editor(e=>e.TextArea());*@
+        })
+        .ID("formUpdate")
+        .LabelMode(FormLabelMode.Floating)
+        .LabelLocation(FormLabelLocation.Left)
+        .MinColWidth(300)
+        .ReadOnly(false)
+        .ShowColonAfterLabel(true)
+    )
+}
+
+@(Html.DevExtreme().DataGrid<Student>().ID("dataGrid")
     .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").Key("SchedulerId"))
     .Columns(columns => {
         columns.AddFor(m => m.Name);
@@ -71,8 +386,8 @@ function HidePopupQuickInput() {
         columns.Add().Caption("Action")
             .Type(GridCommandColumnType.Buttons)
             .Buttons(b=>{
-                b.Add().Icon("edit").Text("edit").OnClick("update_test");
-                b.Add().Icon("close").Hint("remove").OnClick("delete_test");
+                b.Add().Icon("edit").Text("edit").OnClick("update_student");
+                b.Add().Icon("close").Hint("remove").OnClick("delete_student");
             });
     })
      .Toolbar(t=>{
@@ -83,6 +398,7 @@ function HidePopupQuickInput() {
             i.Add().Location(ToolbarItemLocation.After).Widget(w=>w.Button().Text("Create new").ID("btnCreate").Type(ButtonType.Success).OnClick("popUpCreateNew"));
         });
     })
+    
     .ShowBorders(true)
     .ShowRowLines(true)
     .Paging(p => p.PageSize(10))

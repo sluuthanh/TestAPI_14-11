@@ -1,4 +1,5 @@
 ﻿using Api.Models;
+using Api.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +23,15 @@ namespace Api.Controllers
             return Ok(await _context.Districts.ToArrayAsync());
         }
 
-        [HttpGet("GetCityDistric")]
-        public async Task<ActionResult<List<CityDistrict>>> GetCityDistric()
+        [HttpGet("GetDistrictByCity/{cityId}")]
+        public async Task<ActionResult<List<CityDistrict>>> GetDistrictByCity(int cityId)
         {
-            return Ok(await _context.CityDistricts.ToArrayAsync());
+            //var result = from cd in _context.CityDistricts join c in _context.Cities on cd.CityId equals c.Id
+            //             select cd.District;
+            var resultDistrict = from cd in _context.CityDistricts
+                          where cd.CityId == cityId
+                          select cd.District;
+            return Ok(resultDistrict);
         }
 
         [HttpGet("GetCity")]
@@ -51,18 +57,27 @@ namespace Api.Controllers
             return Ok(student);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<List<Student>>> Post(Student test)
+        [HttpPost("Create")]
+        public async Task<ActionResult<Student>> Post(ViewStudent test)
         {
-            _context.Students.Add(test);
+            Student student = new Student();
+            student.Name = test.Name;
+            student.DoB = test.DoB;
+            student.ClassStudent = test.ClassStudent;
+            student.CityId = test.CityId;
+            student.DistrictId = test.DistrictId;
+            student.District = _context.Districts.Find(test.DistrictId);
+            student.City = _context.Cities.Find(test.CityId);
+            _context.Students.Add(student);
             await _context.SaveChangesAsync();
             return Ok();
         }
 
-        [HttpPut]
-        public async Task<ActionResult<Student>> Put(Student test)
+        [HttpPut("Put")]
+        public async Task<ActionResult<Student>> Put(ViewStudent test)
         {
-            Student student =await _context.Students.FindAsync(test.SchedulerId);
+
+            Student student = await _context.Students.FindAsync(test.SchedulerId);
             if (student == null)
             {
                 return BadRequest("Not Found");
@@ -72,7 +87,6 @@ namespace Api.Controllers
             student.ClassStudent = test.ClassStudent;
             student.CityId = test.CityId;
             student.DistrictId = test.DistrictId;
-            student.HinhAnh = test.HinhAnh;
 
             await _context.SaveChangesAsync();
             return Ok();
