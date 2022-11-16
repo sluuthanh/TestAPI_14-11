@@ -46,6 +46,17 @@ namespace Api.Controllers
             return Ok(await _context.Students.ToArrayAsync());
         }
 
+
+        [HttpGet("GetClassDoB")]
+        public async Task<ActionResult<List<dynamic>>> GetClassDoB()
+        {
+            var resultClassDistinct = (from s in _context.Students
+                                 select new { s.ClassStudent  }).Distinct().ToList()  ;
+            var resultDoBDistinct = (from s in _context.Students
+                                     select new { s.DoB }).Distinct().ToList();
+            return Ok(resultClassDistinct);
+        }
+
         [HttpGet("Get/{id}")]
         public async Task<ActionResult<Student>> Get(int id)
         {

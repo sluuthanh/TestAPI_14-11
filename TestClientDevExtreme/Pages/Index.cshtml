@@ -1,5 +1,6 @@
 ﻿@page
 @using TestClientDevExtreme.Models
+@using TestClientDevExtreme.Models.DTO
 
 <h2>Home</h2>
 
@@ -86,16 +87,35 @@ function Update() {
             data: parameter
         }).done(function (rs) {
             DevExpress.ui.dialog.alert("Cập nhật thành công!", "Thông báo!");
-            //dxDataGrid = $("#dataGrid").dxDataGrid("instance");
-            //dxPopupUpdate =  $("#update-popup").dxPopup("instance");
             dxPopupUpdate.hide();
             dxDataGrid.refresh();
-          
         });
 }
 
-function delete_student() {
+function delete_student(e) {
+    var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn xóa khảo sát? </i>", "Cảnh báo !!!");
 
+      result.done(function (dialogResult) {
+          if (dialogResult == true) { 
+              debugger
+                var key = {
+                    "id" : e.row.key,
+                }
+             $.ajax({
+                    url: "/Tests/Delete",
+                    dataType: "json",
+                    type: "Post",
+                    contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                    async: false,
+                    cache: false,
+                    data: key
+                }).done(function (rs) {
+                    DevExpress.ui.dialog.alert("Xóa thành công!", "Thông báo!");
+                    dxDataGrid.refresh();
+                    dxDataGrid.clearSelection();
+                });
+          }
+      })
 }
 
 
@@ -104,7 +124,6 @@ function HidePopupUpdate() {
         result.done(function (dialogResult) {
             if (dialogResult == true) {
                 isEdit = false;
-              
                 dxPopupUpdate.hide();
             }
         })
@@ -116,7 +135,6 @@ function HidePopupCreate() {
         result.done(function (dialogResult) {
             if (dialogResult == true) {
                 isEdit = false;
-               
                 dxPopupCreate.hide();
             }
         })
@@ -143,6 +161,18 @@ function GetCityId() {
     }
         return dxFormGetCity.CityId;
 }
+
+function returnSearchClass() {
+
+}
+
+function Search_Click(){
+
+}
+
+function Clear_Click() {
+
+}
 </script>
 
 
@@ -166,53 +196,23 @@ function GetCityId() {
         </div>       
 
         <div class="card-block table-border-style">            
-           @* @(Html.DevExtreme().Form<LoanSearchDto>().ID("dxFormSearch").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+            @(Html.DevExtreme().Form<StudentSearchDTO>().ID("dxFormSearch").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
                     .Items(items => //LoanSearchDto
                     {
                         items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
                             .Items(grItem =>
                             {
-                                grItem.AddSimpleFor(m => m.BranchCode)
-                                    .Editor(e => e.SelectBox().Disabled(false).SearchEnabled(true).DataSource(d => d.Mvc().Controller("Branch").LoadMode(DataSourceLoadMode.Raw)
-                                    .LoadAction("GetBranchs").Key("BranchCode")).Placeholder("Chi nhánh").ValueExpr("BranchCode").DisplayExpr("BranchName").OnSelectionChanged("BranchCode_ValueChanged"));
+                                grItem.AddSimpleFor(m => m.ClassStudent)
+                                    .Editor(e => e.DropDownBox()
+                                    .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
+                                    .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")));
 
-                                grItem.AddSimpleFor(m => m.ClusterTypeCode)
-                                    .Editor(e => e.SelectBox()  .DataSource(d => d.Mvc().Controller("Cluster")
-                                    .LoadMode(DataSourceLoadMode.Raw)
-                                    .LoadAction("ClusterTypeCode").Key("ClusterTypeCode")).Placeholder("Loại hình")
-                                    .Hint("Không chọn mặc định lấy tất cả").ValueExpr("ClusterTypeCode")
-                                    .DisplayExpr("ClusterTypeName").OnSelectionChanged("ClusterType_ValueChanged").ShowClearButton(true));
 
-                                grItem.AddSimpleFor(m => m.BranchStaffId)
-                                     .Editor(e => e.SelectBox().SearchEnabled(true).DataSource(d => d.Mvc().Controller("BranchStaff")
-                                     .LoadAction("GetByBranchCode").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { branchcode = new JS("GetBranchCode") }).Key("Id"))
-                                     .ValueExpr("Id").DisplayExpr("Fullname").Placeholder("chọn nhân viên...")
-                                     .Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true).OnSelectionChanged("BranchStaff_ValueChanged"));
                             });
                         items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
                             .Items(grItem =>
                             {
-                                grItem.AddSimpleFor(m => m.ClusterCode)
-                                    .Editor(e => e.DropDownBox()
-                                    .DataSource(d => d.Mvc().Controller("Cluster").LoadAction("GetComboboxCluster").LoadMethod("POST").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchCluster") }).Key("ClusterCode"))
-                                    .ValueExpr("ClusterCode").DisplayExpr("ClusterName").Placeholder("chọn đơn vị...").Hint("Không chọn mặc định lấy tất cả").OnValueChanged("ClusterCode_ValueChanged").ContentTemplate(new TemplateName("ContentTemplate_Cluster")));
-
-                                grItem.AddSimpleFor(m => m.GroupCode)
-                                    .Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("Group").LoadAction("GetGroupByCluster").LoadParams(new { clusterCode = new JS("GetClusterCode") }).Key("GroupCode"))
-                                    .ValueExpr("GroupCode").DisplayExpr("GroupName").Placeholder("Chọn nhóm...").Hint("Không chọn mặc định lấy tất cả").OnValueChanged("GroupCode_ValueChanged").ShowClearButton(true));
-
-                                grItem.AddSimpleFor(m => m.DocumentStatusId)
-                                    .Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("Metadata").LoadAction("GetMetadataLoader")
-                                    .LoadMode(DataSourceLoadMode.Raw).LoadParams(new { grouptext = "LOANDOCUMENTSTATUS" }).Key("Id"))
-                                    .ValueExpr("ItemId").DisplayExpr("ItemText").Placeholder("Chọn trạng thái...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true));
-
-                                grItem.AddSimpleFor(m => m.DocumentGroup).Editor(e => e.SelectBox().DataSource(d => d.Mvc().Controller("LoanDocument").LoadAction("GetListDocumentGroup")
-                                        .LoadMode(DataSourceLoadMode.Processed)
-                                        .LoadParams(new { searchOptions = new JS("GetDocumentGroup") })
-                                        //.Key("Id")
-                                        )
-                                        //.ValueExpr("ItemId").DisplayExpr("ItemText")
-                                        .Placeholder("Chọn trạng thái...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true));
+                               
                             });
                         items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(6).Lg(8))
                             .Items(grItem =>
@@ -221,18 +221,18 @@ function GetCityId() {
                                 grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("100%").Type(ButtonType.Normal));
                             });
                     })
-                )    *@        
+                )            
         </div>
     </div>
-  @*  @using (Html.DevExtreme().NamedTemplate("ContentTemplate_Cluster"))
+    @using (Html.DevExtreme().NamedTemplate("ContentTemplate_ClassStudent"))
     {
-        @(Html.DevExtreme().DataGrid<ClusterModel>()
+        @(Html.DevExtreme().DataGrid<Student>()
             .DataSource(new JS(@"component.getDataSource()"))
-            .ID("ClusterCode_embedded_datagrid")
+            .ID("ClassStudent_embedded_datagrid")
             .Columns(c =>
             {
-                c.AddFor(e => e.ClusterCode).AllowResizing(true);
-                c.AddFor(e => e.ClusterName);
+                c.AddFor(e => e.ClassStudent).AllowResizing(true);
+                c.AddFor(e => e.DoB).Format(Format.Year);
             })
                 .ColumnAutoWidth(true)
             .FilterRow(f => f.Visible(true))
@@ -242,17 +242,18 @@ function GetCityId() {
             .Selection(s => s.Mode(SelectionMode.Single))
             .FocusedRowEnabled(true)
             .FocusedRowKey(new JS("component.option('value')"))
+            .Paging(p => p.PageSize(5))
             .OnRowClick(@<text>
-                        function(selectedItems) {                          
-                            var data = selectedItems.data;                           
-                            component.option("value", data.ClusterCode);
-                            component.close();    
-                            Cluster_ValueChanged(data.ClusterCode);                           
-                        }
-            </text>)
+                                function(selectedItems) {                          
+                                    var data = selectedItems.data;                           
+                                    component.option("value", data.ClassStudent);
+                                    component.close();    
+                                    Cluster_ValueChanged(data.ClassStudent);                           
+                                }
+                    </text>)
 
             )
-    }*@
+    }
 </div>
 
 @*Popup Tạo mới*@

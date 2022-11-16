@@ -54,6 +54,19 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
+        [HttpGet("GetClassDoB")]
+        public object GetClassDoB(DataSourceLoadOptions loadOptions)
+        {
+            List<dynamic> result = null;
+            Task.Run(async () => {
+                var response = await client.GetAsync(uri + "/GetClassDoB");
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<List<dynamic>>(body);
+            }).Wait();
+            return DataSourceLoader.Load((dynamic)result, loadOptions);
+        }
+
+
         [HttpGet("GetDistrictByCity")]
         public object GetCityDistrict(DataSourceLoadOptions loadOptions,int cityId)
         {
