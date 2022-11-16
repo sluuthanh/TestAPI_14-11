@@ -3,6 +3,7 @@ using Api.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Api.Controllers
 {
@@ -40,21 +41,42 @@ namespace Api.Controllers
             return Ok(await _context.Cities.ToArrayAsync());
         }
 
-        [HttpGet("GetStudent")]
-        public async Task<ActionResult<List<Student>>> GetStudent()
+        [HttpPost("PostStudent")]
+        public async Task<ActionResult<List<Student>>> PostStudent( ClassSearchDTO searchOptions)
         {
-            return Ok(await _context.Students.ToArrayAsync());
+
+            if (searchOptions.ClassStudent =="" && searchOptions.Year == "")
+            {
+               return Ok(await _context.Students.ToArrayAsync());
+            }
+            else if(searchOptions.ClassStudent != "" && searchOptions.Year != "")
+            {
+                var students = _context.Students.Where(s => s.ClassStudent.Equals(searchOptions.ClassStudent) && s.DoB.Value.Year.ToString().Equals(searchOptions.Year)).ToArray();
+                return Ok(students);
+            }
+            else
+            {
+                var students = _context.Students.Where(s => s.ClassStudent.Equals(searchOptions.ClassStudent) || s.DoB.Value.Year.ToString().Equals(searchOptions.Year)).ToArray();
+                return Ok(students);
+            }
         }
 
 
-        [HttpGet("GetClassDoB")]
-        public async Task<ActionResult<List<dynamic>>> GetClassDoB()
+        [HttpGet("GetClassStudent")]
+        public async Task<ActionResult<List<dynamic>>> GetClassStudent()    
         {
             var resultClassDistinct = (from s in _context.Students
-                                 select new { s.ClassStudent  }).Distinct().ToList()  ;
-            var resultDoBDistinct = (from s in _context.Students
-                                     select new { s.DoB }).Distinct().ToList();
+                                       select new { s.ClassStudent }).Distinct().ToList();
             return Ok(resultClassDistinct);
+        }
+
+        [HttpGet("GetYearDoB")]
+        public async Task<ActionResult<List<dynamic>>> GetYearDoB()
+        {
+            DateTime year;
+            var resultDoBDistinct = ((from s in _context.Students
+                                      select new { year = s.DoB.GetValueOrDefault().ToString("yyyy") }).ToList()).Distinct();
+            return Ok(resultDoBDistinct);
         }
 
         [HttpGet("Get/{id}")]

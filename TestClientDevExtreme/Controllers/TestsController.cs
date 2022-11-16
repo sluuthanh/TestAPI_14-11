@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
 using TestClientDevExtreme.Models;
+using TestClientDevExtreme.Models.DTO;
 
 namespace TestClientDevExtreme.Controllers
 {
@@ -15,16 +16,34 @@ namespace TestClientDevExtreme.Controllers
 
         private HttpClient client = new HttpClient();
 
-        [HttpGet("GetStudent")]
-        public object GetStudent(DataSourceLoadOptions loadOptions)
+        [HttpPost("GetStudent")]
+        public object GetStudent(DataSourceLoadOptions loadOptions, string searchOptions)
         {
-            List<Student> result = null;
-            Task.Run(async () => {
-                var response = await client.GetAsync(uri + "/GetStudent");
-                var body = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<List<Student>>(body);
-            }).Wait();
-            return DataSourceLoader.Load((dynamic)result, loadOptions);
+            List<Student> result = new List<Student>();
+            if (searchOptions == null || searchOptions == "{}")
+            {
+                ClassSearchDTO a = new ClassSearchDTO("","");
+                StringContent content = new StringContent(System.Text.Json.JsonSerializer.Serialize(a), Encoding.UTF8, "application/json");
+                Task.Run(async () => {
+                    var response = await client.PostAsync("https://localhost:7255/Student/PostStudent", content);
+                    var body = await response.Content.ReadAsStringAsync();
+                    result = JsonConvert.DeserializeObject<List<Student>>(body);
+                }).Wait();
+                return DataSourceLoader.Load(result, loadOptions);
+            }
+            else
+            {
+                //ClassSearchDTO a = new ClassSearchDTO();
+                //StringContent content = new StringContent(System.Text.Json.JsonSerializer.Serialize(a), Encoding.UTF8, "application/json");
+                StringContent content = new StringContent(searchOptions, Encoding.UTF8, "application/json");
+                Task.Run(async () => {
+                    var response = await client.PostAsync("https://localhost:7255/Student/PostStudent", content);
+                    var body = await response.Content.ReadAsStringAsync();
+                    result = JsonConvert.DeserializeObject<List<Student>>(body);
+                }).Wait();
+                return DataSourceLoader.Load((dynamic)result, loadOptions);
+            }
+           
         }
 
         [HttpGet("GetCity")]
@@ -54,14 +73,26 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
-        [HttpGet("GetClassDoB")]
-        public object GetClassDoB(DataSourceLoadOptions loadOptions)
+        [HttpGet("GetClassStudent")]
+        public object GetClassStudent(DataSourceLoadOptions loadOptions)
         {
-            List<dynamic> result = null;
+            List<ClassSearchDTO> result = null;
             Task.Run(async () => {
-                var response = await client.GetAsync(uri + "/GetClassDoB");
+                var response = await client.GetAsync(uri + "/GetClassStudent");
                 var body = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<List<dynamic>>(body);
+                result = JsonConvert.DeserializeObject<List<ClassSearchDTO>>(body);
+            }).Wait();
+            return DataSourceLoader.Load((dynamic)result, loadOptions);
+        }
+
+        [HttpGet("GetYearDob")]
+        public object GetYearDob(DataSourceLoadOptions loadOptions)
+        {
+            List<ClassSearchDTO> result = null;
+            Task.Run(async () => {
+                var response = await client.GetAsync(uri + "/GetYearDob");
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<List<ClassSearchDTO>>(body);
             }).Wait();
             return DataSourceLoader.Load((dynamic)result, loadOptions);
         }
