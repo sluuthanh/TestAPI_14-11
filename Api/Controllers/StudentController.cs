@@ -1,5 +1,5 @@
 ﻿using Api.Models;
-using Api.Models.DTO;
+using Api.Models.ViewDTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -96,11 +96,20 @@ namespace Api.Controllers
             Student student = new Student();
             student.Name = test.Name;
             student.DoB = test.DoB;
-            student.ClassStudent = test.ClassStudent;
-            student.CityId = test.CityId;
-            student.DistrictId = test.DistrictId;
-            student.District = _context.Districts.Find(test.DistrictId);
-            student.City = _context.Cities.Find(test.CityId);
+            if (test.ClassStudent != null)
+            {
+                student.ClassStudent = test.ClassStudent;
+            }
+            if(test.DistrictId != null )
+            {
+                student.DistrictId = test.DistrictId;
+                student.District = _context.Districts.Find(test.DistrictId);
+            }
+            if (test.CityId != null)
+            {
+                student.CityId = test.CityId;
+                student.City = _context.Cities.Find(test.CityId);
+            }
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             return Ok();
@@ -120,8 +129,32 @@ namespace Api.Controllers
             student.ClassStudent = test.ClassStudent;
             student.CityId = test.CityId;
             student.DistrictId = test.DistrictId;
-
+            student.District = _context.Districts.Find(test.DistrictId);
+            student.City = _context.Cities.Find(test.CityId);
             await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("updateSelected")]
+        public async Task<ActionResult<List<Student>>> updateSelected(List<Student> lstModel)
+        {
+          
+            foreach (var test in lstModel)
+            {
+                Student student = await _context.Students.FindAsync(test.SchedulerId);
+                if (student == null)
+                {
+                    return BadRequest("Not Found");
+                }
+                student.Name = test.Name;
+                student.DoB = test.DoB;
+                student.ClassStudent = test.ClassStudent;
+                student.CityId = test.CityId;
+                student.DistrictId = test.DistrictId;
+                student.District = _context.Districts.Find(test.DistrictId);
+                student.City = _context.Cities.Find(test.CityId);
+                await _context.SaveChangesAsync();
+            }
             return Ok();
         }
 
@@ -135,6 +168,22 @@ namespace Api.Controllers
             }
             _context.Students.Remove(delete);
             await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("DeleteSelection")]
+        public async Task<ActionResult<List<Student>>> DeleteSelection(List<int> listId)
+        {
+            foreach (var idDelete in listId)
+            {
+                Student studentDelete = await _context.Students.FindAsync(idDelete);
+                if (studentDelete == null)
+                {
+                    return BadRequest("Not Found");
+                }
+                _context.Students.Remove(studentDelete);
+            }
+                await _context.SaveChangesAsync();
             return Ok();
         }
     }

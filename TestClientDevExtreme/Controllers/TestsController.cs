@@ -20,6 +20,7 @@ namespace TestClientDevExtreme.Controllers
         public object GetStudent(DataSourceLoadOptions loadOptions, string searchOptions)
         {
             List<Student> result = new List<Student>();
+            ClassSearchDTO b = JsonConvert.DeserializeObject <ClassSearchDTO>(searchOptions);
             if (searchOptions == null || searchOptions == "{}")
             {
                 ClassSearchDTO a = new ClassSearchDTO("","");
@@ -113,12 +114,14 @@ namespace TestClientDevExtreme.Controllers
         [HttpPost("Create")]
         public object Insert(string search)
         {
+            Student inputStudent = JsonConvert.DeserializeObject<Student>(search);
             Student result = null;
-            StringContent content = new StringContent(search, Encoding.UTF8, "application/json");
+            StringContent content = new StringContent(System.Text.Json.JsonSerializer.Serialize(inputStudent), Encoding.UTF8, "application/json");
+            //StringContent content = new StringContent(search, Encoding.UTF8, "application/json");
             Task.Run(async () =>
             {
                 var response = await client.PostAsync(uri + "/Create", content);
-                var body = await response.Content.ReadAsStringAsync();
+                 var body = await response.Content.ReadAsStringAsync();
                 result = JsonConvert.DeserializeObject<Student>(body);
             }).Wait();
             return Json(result);
@@ -141,6 +144,22 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
+        [HttpPost("Update")]
+        public object Update(List<Student> lstModel)
+        {
+            StringContent content = new StringContent(System.Text.Json.JsonSerializer.Serialize(lstModel), Encoding.UTF8, "application/json");
+            var result = new ResponseMessage();
+            Task.Run(async () =>
+            {
+
+                var response = await client.PutAsync(uri + "/updateSelected", content);
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<ResponseMessage>(body);
+            }).Wait();
+            return result;
+        }
+
+
         [HttpPost("Delete")]
         public object Delete(int id)
         {
@@ -155,5 +174,20 @@ namespace TestClientDevExtreme.Controllers
             return result;
         }
 
+
+        [HttpPost("DeleteSelection")]
+        public object DeleteSelection(List<int> lstId)
+        {
+            StringContent content = new StringContent(System.Text.Json.JsonSerializer.Serialize(lstId), Encoding.UTF8, "application/json");
+            Student result = null;
+            Task.Run(async () =>
+            {
+
+                var response = await client.PostAsync(uri + $"/DeleteSelection", content);
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<Student>(body);
+            }).Wait();
+            return result;
+        }
     }
 }

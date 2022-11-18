@@ -6,17 +6,18 @@
 
 <script>
 var dxPopup = null; var dxFormObject = null;
-var dxForm = null;
-var dxPopupUpdate = null;
+var dxForm = null; var isEdit = false;
+var dxPopupUpdate = null; dxPopupEditAll = null; var dxQuickInputObject = null;
 var dxPopupCreate = null;
 var keyObjectUpdate = null;
 var dxformSearch = null; var formSearchObject = null;
 var searchOptions = null;
-
+var dxDataGrid = null; var changesDxGridStudent = null;
 $(document).ready(function(){
     dxDataGrid = $("#dataGridStudent").dxDataGrid("instance");
     dxPopupCreate =  $("#create-popup").dxPopup("instance");
     dxPopupUpdate =  $("#update-popup").dxPopup("instance");
+    dxPopupEditAll =  $("#update-select-popup").dxPopup("instance");
     dxformSearch = $("#dxFormSearch").dxForm("instance");
     formSearchObject = $('#dxFormSearch').dxForm('instance').option("formData");
 })
@@ -68,7 +69,7 @@ function update_student(e) {
     dxFormObject.getEditor("DistrictId").option("value", e.row.data.DistrictId)
 }
 
-function Update() {
+function UpdateStudent() {
     var dxFormxx = $("#formUpdate").dxForm("instance").option("formData");
     var newObject = {
         "SchedulerId" : keyObjectUpdate,
@@ -130,7 +131,15 @@ function HidePopupUpdate() {
         })
 }
 
-
+function HidePopupQuickInput() {
+     var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn đóng? </i>", "Cảnh báo !!!");
+        result.done(function (dialogResult) {
+            if (dialogResult == true) {
+                //isEdit = false;
+                dxPopupEditAll.hide();
+            }
+        })
+}
 function HidePopupCreate() {
       var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn đóng? </i>", "Cảnh báo !!!");
         result.done(function (dialogResult) {
@@ -142,8 +151,13 @@ function HidePopupCreate() {
 }
 
 function City_ValueChanged(e) {
+    var selectedRowsData = dxDataGrid.getSelectedRowsData();
     if (keyObjectUpdate > 0) {
         dxFormObject = $("#formUpdate").dxForm("instance");
+        dxFormObject.getEditor("DistrictId").getDataSource().reload();
+        dxFormObject.getEditor("DistrictId").option('value', null);
+    } else if (selectedRowsData.length>0) {
+        dxFormObject = $("#dxFormQuickInput").dxForm("instance");
         dxFormObject.getEditor("DistrictId").getDataSource().reload();
         dxFormObject.getEditor("DistrictId").option('value', null);
     } else {
@@ -155,8 +169,12 @@ function City_ValueChanged(e) {
 }
 
 function GetCityId() {
-     if (keyObjectUpdate > 0) {
+    var selectedRowsData = dxDataGrid.getSelectedRowsData();
+
+    if (keyObjectUpdate > 0) {
         dxFormGetCity = $("#formUpdate").dxForm("instance").option("formData");
+    } else if (selectedRowsData.length>0) {
+         dxFormGetCity = $("#dxFormQuickInput").dxForm("instance").option("formData");
     } else {
         dxFormGetCity = $("#formCreate").dxForm("instance").option("formData");
     }
@@ -173,12 +191,19 @@ function GetFormStudentSearchData() {
     //formSearchObject.DoB 
        formSearchObject = $('#dxFormSearch').dxForm('instance').option("formData");
 
-    debugger
+    //debugger
     searchOptions = {
         ClassStudent : formSearchObject.ClassStudent,
         Year : formSearchObject.DoB
     }
+    if (searchOptions.ClassStudent == undefined || searchOptions.ClassStudent == null) {
+        searchOptions.ClassStudent = ""
+    }
+    if(searchOptions.Year == undefined || searchOptions.Year == null) {
+        searchOptions.Year = ""
+    }
     return JSON.stringify(searchOptions);
+    
 }
 
 function Search_Click(e){
@@ -217,14 +242,169 @@ function Clear_Click() {
         //    $("#txtCreateSuggetion").dxButton({ disabled: true });
         //}
         formSearchObject = $('#dxFormSearch').dxForm('instance').option("formData");
-        //dxDataGridLoan.refresh();
+        dxDataGrid.refresh();
+
 }
 
 function Class_ValueChanged() {
 
 }
 
+function slNoDataGridStudent(container, e) {
+    //debugger
+     var index = dxDataGrid.pageIndex() * dxDataGrid.pageSize() + e.rowIndex + 1;
+     container.text(index);
+}
 
+function SuggestDelete(e) {
+     var selectedRows = dxDataGrid.getSelectedRowsData();
+    var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn xóa </i>"+ selectedRows.length +" Student đã chọn?", "Cảnh báo !!!");
+    result.done(function (dialogResult) {
+        if (dialogResult == true) { 
+           
+            //var isSuggest = false;
+            if (selectedRows.length > 0) {
+                var lstId = [];
+                debugger
+                  for (i = 0; i < selectedRows.length; i++) {
+                        lstId.push(selectedRows[i].SchedulerId);
+                    }
+                 //lstId.push(e.row.data.SchedulerId);
+                var parameter = { lstId: lstId }
+                $.ajax({
+                    url: "/Tests/DeleteSelection",
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                    async: false,
+                    cache: false,
+                    data: parameter
+                }).done(function(rs) {
+                    //if (rs.Status == 200) {
+                        DevExpress.ui.dialog.alert("Xóa thành công!", "Thông báo!");
+                        dxDataGrid.refresh();
+                        dxDataGrid.clearSelection();
+                    //}
+                    //else {
+                        //debugger
+                        //DevExpress.ui.dialog.alert(rs.Message, "Thông báo!");
+                    //}
+                });
+            } else {
+                DevExpress.ui.dialog.alert("Vui lòng chọn dữ liệu để tiến hành kiểm tra!", "Thông báo!");
+            }
+        }
+    })
+}
+
+
+// thay changeData vào dataGrid
+function UpdateAll() {
+    debugger
+    dxQuickInputObject = $("#dxFormQuickInput").dxForm('instance').option("formData");
+    // lay thông tin sv
+    //var student = $("#")
+    var selectedRowsData = dxDataGrid.getSelectedRowsData();
+    let grid = dxDataGrid.getDataSource().items();  //__rawData;
+    if (selectedRowsData.length > 0) {
+        var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn nhập nhanh dữ liệu cho </i>" + selectedRowsData.length + " dòng dữ liệu đã chọn?", "Cảnh báo !!!");
+        result.done(function(dialogResult) {
+            if (dialogResult == true) {
+                debugger
+                for (var i = 0; i < grid.length; i++) {
+                    for (var j = 0; j < selectedRowsData.length; j++) {
+                        if (grid[i].SchedulerId == selectedRowsData[j].SchedulerId) {
+                            debugger
+                            if (dxQuickInputObject.ClassStudent != null) {
+                                dxDataGrid.cellValue(i, "ClassStudent", dxQuickInputObject.ClassStudent);
+                            }
+                            if (dxQuickInputObject.CityId != null) {
+                                dxDataGrid.cellValue(i, "CityId", dxQuickInputObject.CityId);
+                            }
+                            if (dxQuickInputObject.DistrictId != null) {
+                                dxDataGrid.cellValue(i, "DistrictId", dxQuickInputObject.DistrictId);
+                            }
+                        }
+                    }
+                }
+                DevExpress.ui.dialog.alert("<i>Nhập liệu nhanh thành công!</i>", "Thông báo");
+                dxDataGrid.clearSelection();
+                dxPopupEditAll.hide();
+            }
+        })
+    }
+    else {
+         DevExpress.ui.dialog.alert("<i>Vui lòng chọn dòng dữ liệu cần nhập liệu nhanh!</i>", "Thông báo");
+    }
+}
+
+function ShowPopupEditAll(){
+    var selectedRows = dxDataGrid.getSelectedRowsData();
+    if (selectedRows.length > 0) {
+        var selectedRows = dxDataGrid.getSelectedRowsData();
+          keyObjectUpdate = null;
+         dxPopupEditAll.show();
+        //ShowPopupQuickInput();
+    } else {
+        DevExpress.ui.dialog.alert("<i>Vui lòng chọn sinh viên để chỉnh sửa nhanh!</i>", "Thông báo");
+    }
+} 
+
+//function ShowPopupQuickInput() {
+   
+//}
+
+// update DB  selected_student    (UpdateLoanDocument)
+function UpdateDataGridStudent (){
+     var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn cập nhật dữ liệu đã chọn? </i>", "Cảnh báo !!!");
+        result.done(function (dialogResult) {
+            if (dialogResult) {
+                var selectedRowsData = dxDataGrid.getSelectedRowsData();
+                if (changesDxGridStudent != undefined) {
+                    if (selectedRowsData.length > 0 && changesDxGridStudent.length > 0) {
+                        for (i = 0; i < selectedRowsData.length; i++) {
+                            for (j = 0; j < changesDxGridStudent.length; j++) {
+                                if (selectedRowsData[i].SchedulerId == changesDxGridStudent[j].key) {
+                                    selectedRowsData[i].ClassStudent = changesDxGridStudent[j].data.ClassStudent ?? selectedRowsData[i].ClassStudent
+                                    selectedRowsData[i].CityId = changesDxGridStudent[j].data.CityId ?? selectedRowsData[i].CityId
+                                    selectedRowsData[i].DistrictId = changesDxGridStudent[j].data.DistrictId ?? selectedRowsData[i].DistrictId
+                                }
+                            }
+                        }
+                    }
+                    var parameter = { lstModel: selectedRowsData };
+                    $.ajax({
+                        url: "/Tests/Update",
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                        async: false,
+                        cache: false,
+                        data: parameter
+                    }).done(function(rs) {
+                        DevExpress.ui.dialog.alert("Cập nhật thành công!", "Thông báo!");
+                        dxDataGrid.refresh();
+                        dxDataGrid.clearSelection();
+                    });
+                }
+            } else {
+                DevExpress.ui.dialog.alert("Chưa Cập nhật dữ liệu!", "Thông báo!");
+            }
+        })
+}
+
+function OnOptionChangeddxGridStudent(e) {
+    if (e.name === "editing") {
+        changesDxGridStudent = e.component.option("editing.changes");
+            changesDxGridStudent = changesDxGridStudent.map((change) => {
+                return {
+                    type: change.type,
+                    key: change.type !== "change" ? change.key : undefined,
+                    data: change.data
+                };
+            });
+    }
+}
 </script>
 
 
@@ -254,7 +434,7 @@ function Class_ValueChanged() {
                         items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
                             .Items(grItem =>
                             {
-                                     @*                       grItem.AddSimpleFor(m => m.ClassStudent)
+                                                                                                                                                                         @*                       grItem.AddSimpleFor(m => m.ClassStudent)
                                     .Editor(e => e.DropDownBox()
                                     .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
                                     .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")).ShowClearButton(true));*@
@@ -289,7 +469,7 @@ function Class_ValueChanged() {
     @using (Html.DevExtreme().NamedTemplate("ContentTemplate_ClassStudent"))
     {
         @(Html.DevExtreme().DataGrid<Student>()
-                                                  @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
+                                                                                                                                                                                        @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
             .DataSource(new JS(@"component.getDataSource()"))
             .ID("ClassStudent_embedded_datagrid")
             .Columns(c =>
@@ -307,14 +487,14 @@ function Class_ValueChanged() {
             .FocusedRowKey(new JS("component.option('value')"))
             .Paging(p => p.PageSize(5))
             .OnRowClick(
-                                                    @<text>
-                                                    function(selectedItems) {  
-                                                        var data = selectedItems.data;                           
-                                                        component.option("value", data.SchedulerId);
-                                                        component.close();    
-                                                        @*Class_ValueChanged(data.ClassStudent);                           *@
-                                                    }
-                                                    </text>
+                                                @<text>
+                                                function(selectedItems) {  
+                                                    var data = selectedItems.data;                           
+                                                    component.option("value", data.SchedulerId);
+                                                    component.close();    
+                                                    @*Class_ValueChanged(data.ClassStudent);                           *@
+                                                }
+                                                </text>
                 )
             )
     }
@@ -334,7 +514,7 @@ function Class_ValueChanged() {
         })
         .ID("create-popup")
         .ShowTitle(true)
-        .Height("100%")
+        .Height("600")
         .Title("Create new")
         .DragEnabled(false)
         .ShowCloseButton(false)
@@ -378,12 +558,13 @@ function Class_ValueChanged() {
 }
 
 
+@*Popup Update Student*@
 <div>
     @(Html.DevExtreme().Popup()
         .ToolbarItems(t =>
         {
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Update").Icon("save").Text("Lưu"));
+                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("UpdateStudent").Icon("save").Text("Lưu"));
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
                 .Widget(w => w.Button().Type(ButtonType.Danger)
                 .OnClick("HidePopupUpdate").Icon("close").Text("Đóng"));
@@ -391,13 +572,54 @@ function Class_ValueChanged() {
         .ID("update-popup")
         .ShowTitle(true)
         .Height("100%")
-        .Title("Update")
+        .Title("Update Student")
         .DragEnabled(false)
         .ShowCloseButton(false)
         .CloseOnOutsideClick(false)
         .ContentTemplate(new TemplateName("form-update-template"))
         )
 </div>
+
+@*Popup hỗ trợ nhập liệu nhanh*@
+<div>
+    @(Html.DevExtreme().Popup()
+        .ToolbarItems(t =>
+        {
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+            .Widget(w => w.Button().Type(ButtonType.Success).OnClick("UpdateAll").Icon("save").Text("Lưu"));
+        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+            .Widget(w => w.Button().Type(ButtonType.Danger)
+            .OnClick("HidePopupQuickInput").Icon("close").Text("Đóng"));
+        })
+        .ID("update-select-popup")
+        .ShowTitle(true)
+        .Height("100%")
+        .Title("Hỗ trợ nhập liệu nhanh")
+        .DragEnabled(false)
+        .ShowCloseButton(true)
+        .CloseOnOutsideClick(false)
+        .ContentTemplate(
+                                                  @<text>
+                                                        @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+.Items(i=>{
+i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
+i.AddSimpleFor(m=>m.CityId)
+.Editor(e=>e.SelectBox().SearchEnabled(true)
+.DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+.ValueExpr("Id").DisplayExpr("City1").OnValueChanged("City_ValueChanged").Placeholder("chọn City...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+);
+i.AddSimpleFor(m=>m.DistrictId)
+.Editor(e=>e.SelectBox().SearchEnabled(true)
+.DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrictByCity").LoadParams(new {cityId = new JS("GetCityId") }).LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+.ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+);
+})
+                                                        )
+                                                  </text>
+                                        )
+        )
+</div>
+
 
 @using (Html.DevExtreme().NamedTemplate("form-update-template")) {
     @(Html.DevExtreme().Form<Student>().LabelLocation(FormLabelLocation.Top)
@@ -440,6 +662,7 @@ function Class_ValueChanged() {
         .LoadMethod("Post")
         )
     .Columns(columns => {
+        columns.Add().DataField("STT").Width("40px").CellTemplate(new JS("slNoDataGridStudent")).AllowFiltering(false).AllowSorting(false);
         columns.AddFor(m => m.Name);
         columns.AddFor(m => m.ClassStudent);
         columns.AddFor(m => m.DoB);
@@ -466,21 +689,30 @@ function Class_ValueChanged() {
             i.Add().Name(DataGridToolbarItem.SearchPanel);
             i.Add().Name(DataGridToolbarItem.ColumnChooserButton);
             i.Add().Location(ToolbarItemLocation.After).Widget(w=>w.Button().Text("Create new").ID("btnCreate").Type(ButtonType.Success).OnClick("popUpCreateNew"));
+            i.Add().Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("edit")
+                            .Text("Chỉnh sửa hàng loạt").ID("btnEditAll").Type(ButtonType.Success).Disabled(false)
+                            .OnClick("ShowPopupEditAll"));
+            i.Add().Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("close")
+                                .Text("Xóa").ID("btnDelete").OnClick("SuggestDelete").Type(ButtonType.Danger).Disabled(false));
+            i.Add().Location(ToolbarItemLocation.After).Widget(w => w.Button().Icon("save")
+                                .Text("Lưu").ID("btnUpdateDataGridStudent").Type(ButtonType.Success).Disabled(false)
+                                            .OnClick("UpdateDataGridStudent"));//@<text>function(e){$("#dxGridLoan").dxDataGrid
         });
     })
     
     .ShowBorders(true)
     .ShowRowLines(true)
     .Paging(p => p.PageSize(10))
-    .FilterRow(f => f.Visible(true))
     .HeaderFilter(f => f.Visible(true))
     .SearchPanel(e => e.Visible(true))
     .ColumnChooser(c => c.Enabled(true).Mode(GridColumnChooserMode.Select).Title("Chọn cột").AllowSearch(true))
     .FilterPanel(filterPanel => filterPanel.Visible(true))
     .FilterRow(filterRow => filterRow.Visible(true))
-    .GroupPanel(p => p.Visible(true))
+    .Selection(s=>s.Mode(SelectionMode.Multiple))
+    @*.GroupPanel(p => p.Visible(true))*@
     .Grouping(g => g.AutoExpandAll(false))
     .RemoteOperations(true)
+    .OnOptionChanged("OnOptionChangeddxGridStudent")
     @* .Summary(s => s
         .TotalItems(totalItems => {
             totalItems.AddFor(m => m.ShipCity).SummaryType(SummaryType.Count);
