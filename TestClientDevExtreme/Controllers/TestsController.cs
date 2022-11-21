@@ -111,6 +111,18 @@ namespace TestClientDevExtreme.Controllers
             return DataSourceLoader.Load((dynamic)result, loadOptions);
         }
 
+        [HttpGet("GetDistrictByCityData")]
+        public object GetDistrictByCityData(DataSourceLoadOptions loadOptions)
+        {
+            List<CityDistrict> result = new List<CityDistrict>();
+            Task.Run(async () => {
+                var response = await client.GetAsync(uri + "/GetDistrictByCityData");
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<List<CityDistrict>>(body);
+            }).Wait();
+            return Json(result);
+        }
+
         [HttpPost("Create")]
         public object Insert(string search)
         {

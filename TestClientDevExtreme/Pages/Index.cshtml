@@ -13,7 +13,19 @@ var keyObjectUpdate = null;
 var dxformSearch = null; var formSearchObject = null;
 var searchOptions = null;
 var dxDataGrid = null; var changesDxGridStudent = null;
+var StudentData = null;
 $(document).ready(function(){
+        $.ajax({
+            url: "/Tests/GetDistrictByCityData",
+            dataType: "json",
+            type: "GET",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            async: false,
+            cache: false,
+        }).done(function (rs) {
+            StudentData = rs;
+        }); 
+
     dxDataGrid = $("#dataGridStudent").dxDataGrid("instance");
     dxPopupCreate =  $("#create-popup").dxPopup("instance");
     dxPopupUpdate =  $("#update-popup").dxPopup("instance");
@@ -182,6 +194,18 @@ function GetCityId() {
         return dxFormGetCity.CityId;
 }
 
+function GetCityIdFromDataGrid(e) {
+    if (Object.keys(e).length===0) {
+        return StudentData;
+    }
+     return StudentData.filter(f=>f.CityId==e.data.CityId);
+}
+
+function setCellCityValue(rowData,value) {
+    rowData.CityId = value;
+    rowData.DistrictId = null;
+}
+
 //function returnSearchClass() {
 
 //}
@@ -192,7 +216,6 @@ function GetFormStudentSearchData() {
     //formSearchObject.DoB 
        formSearchObject = $('#dxFormSearch').dxForm('instance').option("formData");
 
-    //debugger
     searchOptions = {
         ClassStudent : formSearchObject.ClassStudent,
         Year : formSearchObject.DoB
@@ -252,7 +275,6 @@ function Class_ValueChanged() {
 }
 
 function slNoDataGridStudent(container, e) {
-    //debugger
      var index = dxDataGrid.pageIndex() * dxDataGrid.pageSize() + e.rowIndex + 1;
      container.text(index);
 }
@@ -266,7 +288,6 @@ function SuggestDelete(e) {
             //var isSuggest = false;
             if (selectedRows.length > 0) {
                 var lstId = [];
-                debugger
                   for (i = 0; i < selectedRows.length; i++) {
                         lstId.push(selectedRows[i].SchedulerId);
                     }
@@ -287,7 +308,6 @@ function SuggestDelete(e) {
                         dxDataGrid.clearSelection();
                     //}
                     //else {
-                        //debugger
                         //DevExpress.ui.dialog.alert(rs.Message, "Thông báo!");
                     //}
                 });
@@ -301,7 +321,6 @@ function SuggestDelete(e) {
 
 // thay changeData vào dataGrid
 function UpdateAll() {
-    debugger
     dxQuickInputObject = $("#dxFormQuickInput").dxForm('instance').option("formData");
     // lay thông tin sv
     //var student = $("#")
@@ -311,11 +330,9 @@ function UpdateAll() {
         var result = DevExpress.ui.dialog.confirm("<i>Bạn có chắc muốn nhập nhanh dữ liệu cho </i>" + selectedRowsData.length + " dòng dữ liệu đã chọn?", "Cảnh báo !!!");
         result.done(function(dialogResult) {
             if (dialogResult == true) {
-                debugger
                 for (var i = 0; i < grid.length; i++) {
                     for (var j = 0; j < selectedRowsData.length; j++) {
                         if (grid[i].SchedulerId == selectedRowsData[j].SchedulerId) {
-                            debugger
                             if (dxQuickInputObject.ClassStudent != null) {
                                 dxDataGrid.cellValue(i, "ClassStudent", dxQuickInputObject.ClassStudent);
                             }
@@ -410,7 +427,7 @@ function OnOptionChangeddxGridStudent(e) {
 
 
 @*Tìm kiếm dữ liệu*@
-<div class="page-body">
+<div class="page-body mb-3 border rounded p-2 border-success">
     <div class="card-custom">
         <div class="card-header-custom row">
             <div class="col-md-8">
@@ -430,47 +447,47 @@ function OnOptionChangeddxGridStudent(e) {
 
         <div class="card-block table-border-style">            
             @(Html.DevExtreme().Form<StudentSearchDTO>().ID("dxFormSearch").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
-                    .Items(items => //LoanSearchDto
-                    {
-                        items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
-                            .Items(grItem =>
-                            {
-                                                                                                                                                                         @*                       grItem.AddSimpleFor(m => m.ClassStudent)
-                                    .Editor(e => e.DropDownBox()
-                                    .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
-                                    .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")).ShowClearButton(true));*@
+                .Items(items => //LoanSearchDto
+                {
+                    items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
+                        .Items(grItem =>
+                        {
+                                                                                                                                                                                                       @*                       grItem.AddSimpleFor(m => m.ClassStudent)
+                                .Editor(e => e.DropDownBox()
+                                .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
+                                .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")).ShowClearButton(true));*@
 
-                                grItem.AddSimpleFor(m => m.ClassStudent)
-                                    .Editor(e=>e.SelectBox()
-                                        .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetClassStudent").LoadMode(DataSourceLoadMode.Processed).Key("ClassStudent"))
-                                        .ValueExpr("ClassStudent").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả")
-                                    );
-                                grItem.AddSimpleFor(m=>m.DoB)
-                                    .Editor(e=>e.SelectBox()
-                                        .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetYearDob").LoadMode(DataSourceLoadMode.Processed).Key("Year"))
-                                        .ValueExpr("Year").DisplayExpr("Year").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả")
-                                    );
+                            grItem.AddSimpleFor(m => m.ClassStudent)
+                                .Editor(e=>e.SelectBox()
+                                    .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetClassStudent").LoadMode(DataSourceLoadMode.Processed).Key("ClassStudent"))
+                                    .ValueExpr("ClassStudent").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả")
+                                );
+                            grItem.AddSimpleFor(m=>m.DoB)
+                                .Editor(e=>e.SelectBox()
+                                    .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetYearDob").LoadMode(DataSourceLoadMode.Processed).Key("Year"))
+                                    .ValueExpr("Year").DisplayExpr("Year").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả")
+                                );
 
-                            });
-                        items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
-                            .Items(grItem =>
-                            {
+                        });
+                    items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
+                        .Items(grItem =>
+                        {
                                
-                            });
-                        items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(6).Lg(8))
-                            .Items(grItem =>
-                            {
-                                grItem.AddButton().ButtonOptions(e => e.OnClick("Search_Click").ID("btnSearch").Type(ButtonType.Success).Disabled(false).UseSubmitBehavior(false).Text("Tìm kiếm").Width("100%").Type(ButtonType.Success));
-                                grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("100%").Type(ButtonType.Normal));
-                            });
-                    })
+                        });
+                    items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(6).Lg(8))
+                        .Items(grItem =>
+                        {
+                            grItem.AddButton().ButtonOptions(e => e.OnClick("Search_Click").ID("btnSearch").Type(ButtonType.Success).Disabled(false).UseSubmitBehavior(false).Text("Tìm kiếm").Width("100%").Type(ButtonType.Success));
+                            grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("100%").Type(ButtonType.Normal));
+                        });
+                })
                 )            
         </div>
     </div>
     @using (Html.DevExtreme().NamedTemplate("ContentTemplate_ClassStudent"))
     {
         @(Html.DevExtreme().DataGrid<Student>()
-                                                                                                                                                                                        @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
+                                                                                                                                                                                                                        @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
             .DataSource(new JS(@"component.getDataSource()"))
             .ID("ClassStudent_embedded_datagrid")
             .Columns(c =>
@@ -488,14 +505,14 @@ function OnOptionChangeddxGridStudent(e) {
             .FocusedRowKey(new JS("component.option('value')"))
             .Paging(p => p.PageSize(5))
             .OnRowClick(
-                                                @<text>
-                                                function(selectedItems) {  
-                                                    var data = selectedItems.data;                           
-                                                    component.option("value", data.SchedulerId);
-                                                    component.close();    
-                                                    @*Class_ValueChanged(data.ClassStudent);                           *@
-                                                }
-                                                </text>
+                                                                                @<text>
+                                                                                function(selectedItems) {  
+                                                                                    var data = selectedItems.data;                           
+                                                                                    component.option("value", data.SchedulerId);
+                                                                                    component.close();    
+                                                                                    @*Class_ValueChanged(data.ClassStudent);                           *@
+                                                                                }
+                                                                                </text>
                 )
             )
     }
@@ -599,25 +616,23 @@ function OnOptionChangeddxGridStudent(e) {
         .DragEnabled(false)
         .ShowCloseButton(true)
         .CloseOnOutsideClick(false)
-        .ContentTemplate(
-                                                  @<text>
-                                                        @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
-.Items(i=>{
-i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
-i.AddSimpleFor(m=>m.CityId)
-.Editor(e=>e.SelectBox().SearchEnabled(true)
-.DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").LoadMode(DataSourceLoadMode.Processed).Key("Id"))
-.ValueExpr("Id").DisplayExpr("City1").OnValueChanged("City_ValueChanged").Placeholder("chọn City...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
-);
-i.AddSimpleFor(m=>m.DistrictId)
-.Editor(e=>e.SelectBox().SearchEnabled(true)
-.DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrictByCity").LoadParams(new {cityId = new JS("GetCityId") }).LoadMode(DataSourceLoadMode.Processed).Key("Id"))
-.ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
-);
-})
-                                                        )
-                                                  </text>
-                                        )
+        .ContentTemplate(@<text>
+            @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+                .Items(i=>{
+                i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
+                i.AddSimpleFor(m=>m.CityId)
+                .Editor(e=>e.SelectBox().SearchEnabled(true)
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+                .ValueExpr("Id").DisplayExpr("City1").OnValueChanged("City_ValueChanged").Placeholder("chọn City...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+                );
+                i.AddSimpleFor(m=>m.DistrictId)
+                .Editor(e=>e.SelectBox().SearchEnabled(true)
+                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrictByCity").LoadParams(new {cityId = new JS("GetCityId") }).LoadMode(DataSourceLoadMode.Processed).Key("Id"))
+                .ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
+                );
+                })
+            )
+        </text>)
         )
 </div>
 
@@ -668,15 +683,17 @@ i.AddSimpleFor(m=>m.DistrictId)
         columns.AddFor(m => m.ClassStudent);
         columns.AddFor(m => m.DoB);
         columns.AddFor(m => m.CityId)
+            .SetCellValue("setCellCityValue")
             .Lookup(l=>l
                 .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").Key("Id"))
                 .ValueExpr("Id").DisplayExpr("City1"))
+            .EditorOptions(new { showClearButton = true })
             .AllowEditing(true);
         columns.AddFor(m => m.DistrictId)
             .Lookup(l=>l
-                .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetDistrict").Key("Id"))
-                .ValueExpr("Id").DisplayExpr("District1"))
-            .AllowEditing(true);
+                .DataSource(new JS("GetCityIdFromDataGrid"))
+                .ValueExpr("Id").DisplayExpr("District.District1"))
+            .EditorOptions(new { showClearButton = true });
         columns.Add().Caption("Action")
             .Type(GridCommandColumnType.Buttons)
             .Buttons(b=>{

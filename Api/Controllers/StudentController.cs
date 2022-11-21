@@ -3,6 +3,7 @@ using Api.Models.ViewDTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Globalization;
 
 namespace Api.Controllers
@@ -33,6 +34,17 @@ namespace Api.Controllers
                           where cd.CityId == cityId
                           select cd.District;
             return Ok(resultDistrict);
+        }
+
+        [HttpGet("GetDistrictByCityData")]
+        public async Task<ActionResult<List<CityDistrict>>> GetDistrictByCityData()
+        {
+            List<CityDistrict> cityDistricts  = _context.CityDistricts.Include(c=>c.City).Include(d=>d.District).ToList();
+            string json = JsonConvert.SerializeObject(cityDistricts, Formatting.Indented, new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+            return Ok(json);
         }
 
         [HttpGet("GetCity")]
