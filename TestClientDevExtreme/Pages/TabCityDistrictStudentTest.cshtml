@@ -1,0 +1,152 @@
+﻿@model CityDistrict
+@using TestClientDevExtreme.Models
+
+<script>
+
+
+
+
+function ClosePopupTab() {
+        var dxPopupTab = $("#dxPopupTab").dxPopup("instance");
+    dxPopupTab.hide();
+}
+
+function ShowPopupCityDistrict() {
+        var dxPopupTab = $("#dxPopupTab").dxPopup("instance");
+    dxPopupTab.show();
+}
+
+function tabItemClick() {
+
+}
+
+function slNoDataGridProvince(container,e) {
+    var dxDataGridProvince = $("#dxDataGridProvince").dxDataGrid("instance");
+    var index = dxDataGridProvince.pageIndex() * dxDataGridProvince.pageSize() + e.rowIndex + 1;
+     container.text(index);
+}
+</script>
+
+<div>
+
+    @(Html.DevExtreme().Popup().ToolbarItems(t =>
+    {
+                                           @* t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+        .Widget(w => w.Button().Type(ButtonType.Success).Icon("save").OnClick("SaveSurvey").ID("btnSaveSurvey").Text("Xác nhận"));*@
+        t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
+        .Widget(w => w.Button().Type(ButtonType.Danger).Icon("close").Text("Đóng").StylingMode(ButtonStylingMode.Outlined).OnClick("ClosePopupTab"));
+    })
+    .ID("dxPopupTab")
+    .ShowTitle(true)
+    .Height("70%")
+    .Width("80%")
+    //.FullScreen(true)
+    //.ResizeEnabled(true)
+    .Title("District & City")
+    .DragEnabled(false)
+    .ShowCloseButton(false)
+    .CloseOnOutsideClick(false)
+    .ContentTemplate(new TemplateName("TabCityDistrictTemplate"))
+    )
+
+@using (Html.DevExtreme().NamedTemplate("TabCityDistrictTemplate"))
+    {
+        @(Html.DevExtreme().Form<CityDistrict>().ID("dxFormCityDistrict").LabelLocation(FormLabelLocation.Top).ScrollingEnabled(true)
+            .Items(itemsForm=>{
+                itemsForm.AddTabbed().TabPanelOptions(to=>to.OnTitleClick("tabItemClick").SelectedIndex(0).ID("tabCityDistrict")).Tabs(tabItems=>{
+                    tabItems.Add().Title("City & District Info").ColCountByScreen(e => e.Lg(4).Md(4).Sm(1).Xs(1))
+
+                        .Items(tabItem=>{
+                            tabItem.AddGroup().Caption("City and District Relation").ColCountByScreen(e => e.Lg(3).Md(3).Sm(1).Xs(1)).ColSpan(4)
+                                .Items(tabGrItem=>{
+                                    tabGrItem.AddSimple().ColSpan(3).Template(@<text>
+                                                @(Html.DevExtreme().DataGrid<CityDistrict>().ID("dxDataGridCityDistrict")
+                                            .DataSource(d => d.Mvc().Controller("Tests")
+                                                .LoadAction("GetDistrictByCityData")
+                                                .Key("Id")
+                                                .LoadMethod("Get")
+                                            )
+                                            .ColumnAutoWidth(true)
+                                            .ShowBorders(true)
+                                            .ShowRowLines(true)
+                                            .Toolbar(toobar=>{
+                                                toobar.Items(i =>
+                                                    {
+                                                        i.Add().Name(DataGridToolbarItem.GroupPanel);
+                                                        i.Add().Name(DataGridToolbarItem.SearchPanel);
+                                                        i.Add().Name(DataGridToolbarItem.ColumnChooserButton);
+                                                });
+                                            })
+                                            .Editing(e => e.AllowUpdating(true).Mode(GridEditMode.Batch))
+                                            .Columns(col =>
+                                            {
+                                                col.AddFor(m => m.Id).Visible(false);
+                                                               @* col.Add().DataField("STT").Width("40px").CellTemplate(new JS("slNoDataGridStudent")).AllowFiltering(false).AllowSorting(false);*@
+
+                                                col.AddFor(m => m.CityId)
+                                                    .SetCellValue("setCellCityValue")
+                                                    .Lookup(l=>l
+                                                        .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").Key("Id"))
+                                                        .ValueExpr("Id").DisplayExpr("City1"))
+                                                        .EditorOptions(new { showClearButton = true })
+                                                    .AllowEditing(true);
+                                                col.AddFor(m => m.DistrictId)
+                                                    .Lookup(l=>l
+                                                        .DataSource(new JS("GetCityIdFromDataGrid"))
+                                                        .ValueExpr("Id").DisplayExpr("District.District1"))
+                                                    .EditorOptions(new { showClearButton = true });
+                                            })
+                                                )
+                                            </text>);
+                                });
+                    });
+                    tabItems.Add().Title("Province").ColCountByScreen(e => e.Lg(4).Md(4).Sm(1).Xs(1))
+
+                        .Items(tabItem=>{
+                             tabItem.AddGroup().Caption("City and District Relation").ColCountByScreen(e => e.Lg(3).Md(3).Sm(1).Xs(1)).ColSpan(4)
+                                .Items(tabGrItem=>{ tabGrItem.AddSimple().ColSpan(3).Template(@<text>
+                                            @(Html.DevExtreme().DataGrid<Province>().ID("dxDataGridProvince")
+                                        .DataSource(d=>d.Mvc().Controller("Location").LoadAction("GetProvincies").Key("Id")
+                                            .LoadMethod("Get"))
+                                        .ColumnAutoWidth(true)
+                                            .ShowBorders(true)
+                                            .ShowRowLines(true)
+                                            .Toolbar(toobar=>{
+                                                toobar.Items(i =>
+                                                    {
+                                                        i.Add().Name(DataGridToolbarItem.GroupPanel);
+                                                        i.Add().Name(DataGridToolbarItem.SearchPanel);
+                                                        i.Add().Name(DataGridToolbarItem.ColumnChooserButton);
+                                                });
+                                            })
+                                            .Editing(e => e.AllowUpdating(true).Mode(GridEditMode.Batch))
+                                            .Paging(p => p.PageSize(10))
+                                            .Pager(p =>
+                                            {
+                                                p.ShowPageSizeSelector(true);
+                                                p.AllowedPageSizes(new[] { 10, 20, 50});
+                                                p.ShowInfo(true);
+                                                p.ShowNavigationButtons(true);
+                                            })
+                                            .Columns(col =>
+                                            {
+                                                col.Add().DataField("STT").Width("40px").CellTemplate(new JS("slNoDataGridProvince")).AllowFiltering(false).AllowSorting(false);
+                                                col.AddFor(m => m.Id).Visible(false);
+                                                col.AddFor(m=> m.Name);
+                                                col.AddFor(m=> m.Type);
+                                                col.AddFor(m=> m.Telephonecode);
+                                            })
+                                            )
+                                        </text>);
+
+                                });
+                    });
+                    tabItems.Add().Title("District").ColCountByScreen(e => e.Lg(4).Md(4).Sm(1).Xs(1))
+                        .Items(tabItem=>{
+
+                    });
+                });
+            })
+        )
+    }
+</div>

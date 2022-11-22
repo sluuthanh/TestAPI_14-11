@@ -1,6 +1,5 @@
 ﻿using TestClientDevExtreme.Models;
-
-namespace TestClientDevExtreme
+namespace TestClientDevExtreme.Models
 {
     public partial class CityDistrict
     {

@@ -1,4 +1,4 @@
-﻿namespace TestClientDevExtreme
+﻿namespace TestClientDevExtreme.Models
 {
     public partial class District
     {

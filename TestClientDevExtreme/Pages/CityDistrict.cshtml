@@ -1,0 +1,21 @@
+﻿@model TestClientDevExtreme.Models.CityDistrict
+
+<script>
+
+</script>
+
+<div>
+      @(Html.DevExtreme().Popup().ToolbarItems(t =>
+        {
+            t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom).Widget(w=>w.Button().Type(ButtonType.Danger).OnClick("HidePopupCityDistrict").Icon("Close").Text("Close"));
+        })
+        .ID("dxPopupCityDistrict")
+        .ShowTitle(true)
+        .Height("auto")
+        .Title("City and District relation")
+        .ShowCloseButton(true)
+        .CloseOnOutsideClick(true)
+        .ContentTemplate(new TemplateName("CityDistrict"))
+        )
+
+</div>

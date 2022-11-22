@@ -2,7 +2,7 @@
 @using TestClientDevExtreme.Models
 @using TestClientDevExtreme.Models.DTO
 
-<h2>Home</h2>
+<h2 class="d-flex justify-content-center">Home</h2>
 
 <script>
 var dxPopup = null; var dxFormObject = null;
@@ -423,36 +423,28 @@ function OnOptionChangeddxGridStudent(e) {
             });
     }
 }
+
+function ShowPartialPopupCityDistrict(e) {
+    ShowPopupCityDistrict();
+}
 </script>
 
 
 @*Tìm kiếm dữ liệu*@
-<div class="page-body mb-3 border rounded p-2 border-success">
+<div class="page-body ml-3" >
     <div class="card-custom">
         <div class="card-header-custom row">
-            <div class="col-md-8">
+            <div class="col-md-6 mb-3 border rounded p-2 border-success" >
                 <h5>Bộ lọc</h5>
-            </div>
-            <div class="col-md-4">
-                <div class="card-header-right-custom">
-                    <ul class="list-unstyled card-option">
-                        <li><i class="feather icon-maximize full-card"></i></li>
-                        <li>
-                            <i class="feather icon-minus minimize-card"></i>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>       
-
-        <div class="card-block table-border-style">            
+                <div class="card-block table-border-style">  
+            
             @(Html.DevExtreme().Form<StudentSearchDTO>().ID("dxFormSearch").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
                 .Items(items => //LoanSearchDto
                 {
-                    items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(2).Md(4).Lg(4))
+                    items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(1).Md(2).Lg(2 ))
                         .Items(grItem =>
                         {
-                                                                                                                                                                                                       @*                       grItem.AddSimpleFor(m => m.ClassStudent)
+                                                                                                                                                                                                                   @*                       grItem.AddSimpleFor(m => m.ClassStudent)
                                 .Editor(e => e.DropDownBox()
                                 .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
                                 .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")).ShowClearButton(true));*@
@@ -474,20 +466,37 @@ function OnOptionChangeddxGridStudent(e) {
                         {
                                
                         });
-                    items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(6).Lg(8))
+                    items.AddGroup().ColCountByScreen(e => e.Xs(2).Sm(2).Md(3).Lg(4))
                         .Items(grItem =>
                         {
-                            grItem.AddButton().ButtonOptions(e => e.OnClick("Search_Click").ID("btnSearch").Type(ButtonType.Success).Disabled(false).UseSubmitBehavior(false).Text("Tìm kiếm").Width("100%").Type(ButtonType.Success));
-                            grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("100%").Type(ButtonType.Normal));
+                            grItem.AddButton().ButtonOptions(e => e.OnClick("Search_Click").ID("btnSearch").Disabled(false).UseSubmitBehavior(false).Text("Tìm kiếm").Width("auto").Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined));
+                            grItem.AddButton().ButtonOptions(e => e.OnClick("Clear_Click").Text("Xóa bộ lọc").Width("auto").Type(ButtonType.Default).StylingMode(ButtonStylingMode.Outlined));
                         });
                 })
                 )            
         </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-header-right-custom">
+                    <div class="mb-3 border rounded p-2 border-success d-flex justify-content-center" >
+                        @(Html.DevExtreme().Button()
+                        .Text("Popup City District")
+                        .Type(ButtonType.Success)
+                        .StylingMode(ButtonStylingMode.Text)
+                        .Width("100%")
+                        .OnClick("ShowPartialPopupCityDistrict")
+                    )
+                    </div>
+                </div>
+            </div>
+        </div>       
+
+        
     </div>
     @using (Html.DevExtreme().NamedTemplate("ContentTemplate_ClassStudent"))
     {
         @(Html.DevExtreme().DataGrid<Student>()
-                                                                                                                                                                                                                        @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
+                                                                                                                                                                                                                                    @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
             .DataSource(new JS(@"component.getDataSource()"))
             .ID("ClassStudent_embedded_datagrid")
             .Columns(c =>
@@ -505,14 +514,14 @@ function OnOptionChangeddxGridStudent(e) {
             .FocusedRowKey(new JS("component.option('value')"))
             .Paging(p => p.PageSize(5))
             .OnRowClick(
-                                                                                @<text>
-                                                                                function(selectedItems) {  
-                                                                                    var data = selectedItems.data;                           
-                                                                                    component.option("value", data.SchedulerId);
-                                                                                    component.close();    
-                                                                                    @*Class_ValueChanged(data.ClassStudent);                           *@
-                                                                                }
-                                                                                </text>
+                            @<text>
+                            function(selectedItems) {  
+                                var data = selectedItems.data;                           
+                                component.option("value", data.SchedulerId);
+                                component.close();    
+                                @*Class_ValueChanged(data.ClassStudent);                           *@
+                            }
+                            </text>
                 )
             )
     }
@@ -525,9 +534,9 @@ function OnOptionChangeddxGridStudent(e) {
         .ToolbarItems(t =>
         {
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("Create").Icon("save").Text("Lưu"));
+                .Widget(w => w.Button().Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).OnClick("Create").Icon("save").Text("Lưu"));
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-                .Widget(w => w.Button().Type(ButtonType.Danger)
+                .Widget(w => w.Button().Type(ButtonType.Danger).StylingMode(ButtonStylingMode.Outlined)
                 .OnClick("HidePopupCreate").Icon("close").Text("Đóng"));
         })
         .ID("create-popup")
@@ -582,9 +591,9 @@ function OnOptionChangeddxGridStudent(e) {
         .ToolbarItems(t =>
         {
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-                .Widget(w => w.Button().Type(ButtonType.Success).OnClick("UpdateStudent").Icon("save").Text("Lưu"));
+                .Widget(w => w.Button().Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).OnClick("UpdateStudent").Icon("save").Text("Lưu"));
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-                .Widget(w => w.Button().Type(ButtonType.Danger)
+                .Widget(w => w.Button().Type(ButtonType.Danger).StylingMode(ButtonStylingMode.Outlined)
                 .OnClick("HidePopupUpdate").Icon("close").Text("Đóng"));
         })
         .ID("update-popup")
@@ -604,9 +613,9 @@ function OnOptionChangeddxGridStudent(e) {
         .ToolbarItems(t =>
         {
             t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-            .Widget(w => w.Button().Type(ButtonType.Success).OnClick("UpdateAll").Icon("save").Text("Lưu"));
+            .Widget(w => w.Button().Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).OnClick("UpdateAll").Icon("save").Text("Lưu"));
         t.Add().Location(ToolbarItemLocation.After).Toolbar(Toolbar.Bottom)
-            .Widget(w => w.Button().Type(ButtonType.Danger)
+            .Widget(w => w.Button().Type(ButtonType.Danger).StylingMode(ButtonStylingMode.Outlined)
             .OnClick("HidePopupQuickInput").Icon("close").Text("Đóng"));
         })
         .ID("update-select-popup")
@@ -617,7 +626,7 @@ function OnOptionChangeddxGridStudent(e) {
         .ShowCloseButton(true)
         .CloseOnOutsideClick(false)
         .ContentTemplate(@<text>
-            @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+                        @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
                 .Items(i=>{
                 i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
                 i.AddSimpleFor(m=>m.CityId)
@@ -631,8 +640,8 @@ function OnOptionChangeddxGridStudent(e) {
                 .ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
                 );
                 })
-            )
-        </text>)
+                        )
+                    </text>)
         )
 </div>
 
@@ -687,7 +696,7 @@ function OnOptionChangeddxGridStudent(e) {
             .Lookup(l=>l
                 .DataSource(d=>d.Mvc().Controller("Tests").LoadAction("GetCity").Key("Id"))
                 .ValueExpr("Id").DisplayExpr("City1"))
-            .EditorOptions(new { showClearButton = true })
+                .EditorOptions(new { showClearButton = true })
             .AllowEditing(true);
         columns.AddFor(m => m.DistrictId)
             .Lookup(l=>l
@@ -706,14 +715,14 @@ function OnOptionChangeddxGridStudent(e) {
             i.Add().Name(DataGridToolbarItem.GroupPanel);
             i.Add().Name(DataGridToolbarItem.SearchPanel);
             i.Add().Name(DataGridToolbarItem.ColumnChooserButton);
-            i.Add().Location(ToolbarItemLocation.After).Widget(w=>w.Button().Text("Create new").ID("btnCreate").Type(ButtonType.Success).OnClick("popUpCreateNew"));
-            i.Add().Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("edit")
-                            .Text("Chỉnh sửa hàng loạt").ID("btnEditAll").Type(ButtonType.Success).Disabled(false)
+            i.Add().LocateInMenu(ToolbarItemLocateInMenuMode.Auto).Location(ToolbarItemLocation.After).Widget(w=>w.Button().Text("Create new").ID("btnCreate").Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).OnClick("popUpCreateNew"));
+            i.Add().LocateInMenu(ToolbarItemLocateInMenuMode.Auto).Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("edit")
+                            .Text("Chỉnh sửa hàng loạt").ID("btnEditAll").Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).Disabled(false)
                             .OnClick("ShowPopupEditAll"));
-            i.Add().Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("close")
-                                .Text("Xóa").ID("btnDelete").OnClick("SuggestDelete").Type(ButtonType.Danger).Disabled(false));
-            i.Add().Location(ToolbarItemLocation.After).Widget(w => w.Button().Icon("save")
-                                .Text("Lưu").ID("btnUpdateDataGridStudent").Type(ButtonType.Success).Disabled(false)
+            i.Add().LocateInMenu(ToolbarItemLocateInMenuMode.Auto).Location(ToolbarItemLocation.Before).Widget(w => w.Button().Icon("close")
+                                .Text("Xóa").ID("btnDelete").OnClick("SuggestDelete").Type(ButtonType.Danger).StylingMode(ButtonStylingMode.Outlined).Disabled(false));
+            i.Add().LocateInMenu(ToolbarItemLocateInMenuMode.Auto).Location(ToolbarItemLocation.After).Widget(w => w.Button().Icon("save")
+                                .Text("Lưu").ID("btnUpdateDataGridStudent").Type(ButtonType.Success).StylingMode(ButtonStylingMode.Outlined).Disabled(false)
                                             .OnClick("UpdateDataGridStudent"));//@<text>function(e){$("#dxGridLoan").dxDataGrid
         });
     })
@@ -723,6 +732,7 @@ function OnOptionChangeddxGridStudent(e) {
     .Paging(p => p.PageSize(10))
     .HeaderFilter(f => f.Visible(true))
     .SearchPanel(e => e.Visible(true))
+    .ColumnAutoWidth(true)
     .ColumnChooser(c => c.Enabled(true).Mode(GridColumnChooserMode.Select).Title("Chọn cột").AllowSearch(true))
     .FilterPanel(filterPanel => filterPanel.Visible(true))
     .FilterRow(filterRow => filterRow.Visible(true))
@@ -742,3 +752,7 @@ function OnOptionChangeddxGridStudent(e) {
         })
     )*@
 )
+
+@{
+    await Html.RenderPartialAsync("../Pages/TabCityDistrictStudentTest", new CityDistrict());
+}
