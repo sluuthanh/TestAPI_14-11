@@ -172,7 +172,7 @@ namespace TestClientDevExtreme.Controllers
         }
 
 
-        [HttpPost("Delete")]
+        [HttpGet("Delete/{id}")]
         public object Delete(int id)
         {
             Student result = null;

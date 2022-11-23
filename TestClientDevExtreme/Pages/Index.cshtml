@@ -13,7 +13,8 @@ var keyObjectUpdate = null;
 var dxformSearch = null; var formSearchObject = null;
 var searchOptions = null;
 var dxDataGrid = null; var changesDxGridStudent = null;
-var StudentData = null;
+var StudentData = null; var ProvinceData = null;
+var PermanentProvinceId = null; var PermanentDistrictId = null; var TemporaryProvinceId = null; var TemporaryDistrictId = null;
 $(document).ready(function(){
         $.ajax({
             url: "/Tests/GetDistrictByCityData",
@@ -24,6 +25,19 @@ $(document).ready(function(){
             cache: false,
         }).done(function (rs) {
             StudentData = rs;
+        }); 
+        
+       
+         $.ajax({
+            url: "/Location/GetProvinciesData",
+            dataType: "json",
+            type: "GET",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            async: false,
+            cache: false,
+        }).done(function (rs) {
+            debugger
+            ProvinceData = rs;
         }); 
 
     dxDataGrid = $("#dataGridStudent").dxDataGrid("instance");
@@ -113,17 +127,18 @@ function delete_student(e) {
 
       result.done(function (dialogResult) {
           if (dialogResult == true) { 
-                var key = {
-                    "id" : e.row.key,
-                }
+                //var key = {
+                //    "id" : e.row.key,
+                //}
+              var idDelete = e.row.key;
              $.ajax({
-                    url: "/Tests/Delete",
+                    url: "/Tests/Delete/"+idDelete,
                     dataType: "json",
-                    type: "Post",
+                    type: "Get",
                     contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                     async: false,
                     cache: false,
-                    data: key
+                    //data: key
                 }).done(function (rs) {
                     DevExpress.ui.dialog.alert("Xóa thành công!", "Thông báo!");
                     dxDataGrid.refresh();
@@ -234,22 +249,12 @@ function Search_Click(e){
      if (formSearchObject.ClassStudent != null  || formSearchObject.ClassStudent != undefined || formSearchObject.DoB != null || formSearchObject.DoB != undefined) {
          /*formSearchObject.ClusterCode != null && formSearchObject.BranchStaffId != null && formSearchObject.GroupCode != null*/
             //$("#btnQuickInput").dxButton({ disabled: false });
-            //$("#txtCreateSuggetion").dxButton({ disabled: false });
-            //$("#btnUpdateSurvey").dxButton({ disabled: false }); 
-            //$("#btnCreateSurvey").dxButton({ disabled: false });
-            //$("#btnEditAll").dxButton({ disabled: false });
-            //$("#btnSuggest").dxButton({ disabled: false });
-            //$("#btnDelete").dxButton({ disabled: false });
+         
             dxDataGrid.refresh();
         }
         else {
             //$("#txtCreateSuggetion").dxButton({ disabled: true });
-            //$("#btnUpdateSurvey").dxButton({ disabled: true }); 
-            //$("#btnQuickInput").dxButton({ disabled: true });
-            //$("#btnCreateSurvey").dxButton({ disabled: true });
-            //$("#btnEditAll").dxButton({ disabled: true });
-            //$("#btnSuggest").dxButton({ disabled: true });
-            // $("#btnDelete").dxButton({ disabled: true });
+           
             DevExpress.ui.notify({ message: "Vui lòng chọn mục cần tìm", width: 1000, shading: true }, "warning", 1000);
         }
 }
@@ -444,7 +449,7 @@ function ShowPartialPopupCityDistrict(e) {
                     items.AddGroup().ColCountByScreen(e => e.Xs(1).Sm(1).Md(2).Lg(2 ))
                         .Items(grItem =>
                         {
-                                                                                                                                                                                                                   @*                       grItem.AddSimpleFor(m => m.ClassStudent)
+                                                                                                                                                                                                                           @*                       grItem.AddSimpleFor(m => m.ClassStudent)
                                 .Editor(e => e.DropDownBox()
                                 .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetStudent").LoadMethod("Get").LoadMode(DataSourceLoadMode.Raw).LoadParams(new { searchOptions = new JS("returnSearchClass") }).Key("SchedulerId"))
                                 .ValueExpr("SchedulerId").DisplayExpr("ClassStudent").Placeholder("chọn class...").Hint("Không chọn mặc định lấy tất cả").ContentTemplate(new TemplateName("ContentTemplate_ClassStudent")).ShowClearButton(true));*@
@@ -496,7 +501,7 @@ function ShowPartialPopupCityDistrict(e) {
     @using (Html.DevExtreme().NamedTemplate("ContentTemplate_ClassStudent"))
     {
         @(Html.DevExtreme().DataGrid<Student>()
-                                                                                                                                                                                                                                    @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
+                                                                                                                                                                                                                                            @*  .DataSource(d => d.Mvc().Controller("Tests").LoadAction("GetClassDoB").Key("SchedulerId"))*@
             .DataSource(new JS(@"component.getDataSource()"))
             .ID("ClassStudent_embedded_datagrid")
             .Columns(c =>
@@ -514,14 +519,14 @@ function ShowPartialPopupCityDistrict(e) {
             .FocusedRowKey(new JS("component.option('value')"))
             .Paging(p => p.PageSize(5))
             .OnRowClick(
-                            @<text>
-                            function(selectedItems) {  
-                                var data = selectedItems.data;                           
-                                component.option("value", data.SchedulerId);
-                                component.close();    
-                                @*Class_ValueChanged(data.ClassStudent);                           *@
-                            }
-                            </text>
+                                    @<text>
+                                    function(selectedItems) {  
+                                        var data = selectedItems.data;                           
+                                        component.option("value", data.SchedulerId);
+                                        component.close();    
+                                        @*Class_ValueChanged(data.ClassStudent);                           *@
+                                    }
+                                    </text>
                 )
             )
     }
@@ -626,7 +631,7 @@ function ShowPartialPopupCityDistrict(e) {
         .ShowCloseButton(true)
         .CloseOnOutsideClick(false)
         .ContentTemplate(@<text>
-                        @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
+                                @(Html.DevExtreme().Form<Student>().ID("dxFormQuickInput").ScrollingEnabled(true).LabelLocation(FormLabelLocation.Top)
                 .Items(i=>{
                 i.AddSimpleFor(m=>m.ClassStudent).Editor(e=>e.TextBox());
                 i.AddSimpleFor(m=>m.CityId)
@@ -640,8 +645,8 @@ function ShowPartialPopupCityDistrict(e) {
                 .ValueExpr("Id").DisplayExpr("District1").Placeholder("chọn District...").Hint("Không chọn mặc định lấy tất cả").ShowClearButton(true)
                 );
                 })
-                        )
-                    </text>)
+                                )
+                            </text>)
         )
 </div>
 

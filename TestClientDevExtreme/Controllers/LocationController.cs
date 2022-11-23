@@ -33,18 +33,46 @@ namespace TestClientDevExtreme.Controllers
 
             return DataSourceLoader.Load((dynamic)result, loadOptions);
         }
+
+        [HttpGet("GetProvinciesData")]
+        public object GetProvinciesData()
+        {
+            var result = new List<Province>();
+            Task.Run(async () =>
+            {
+                var response = await client.GetAsync(uri + $"/location/province");
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<List<Province>>(body);
+            }).Wait();
+            return Json(result);
+        }
+
+
+        [HttpGet("GetProvinceById")]
+        public object GetProvinceById(DataSourceLoadOptions loadOptions, int _provinceId)
+        {
+            var result = new Province();
+            Task.Run(async () =>
+            {
+                var response = await client.GetAsync(uri + $"/location/province/" + _provinceId.ToString());
+                var body = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<Province>(body);
+            }).Wait();
+
+            return DataSourceLoader.Load((dynamic)result, loadOptions);
+        }
         #endregion
 
         #region District
         [HttpGet("GetDistricts")]
         public object GetDistricts(DataSourceLoadOptions loadOptions)
         {
-            var result = new DistrictNew();
+            var result = new List<DistrictNew>();
             Task.Run(async () =>
             {
                 var response = await client.GetAsync(uri + $"/location/district");
                 var body = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<DistrictNew>(body);
+                result = JsonConvert.DeserializeObject<List<DistrictNew>>(body);
             }).Wait();
 
             return DataSourceLoader.Load((dynamic)result, loadOptions);
@@ -68,12 +96,12 @@ namespace TestClientDevExtreme.Controllers
         public object GetDistrictsByProvinceId(DataSourceLoadOptions loadOptions, long _provinceId)
         {
             var queryParams = Request.Query.ToDictionary(x => x.Key, x => x.Value);
-            var result = new DistrictNew();
+            var result = new List<DistrictNew>();
             Task.Run(async () =>
             {
                 var response = await client.GetAsync(uri + $"/location/district/getlistbyprovince?provinceId=" + _provinceId.ToString());
                 var body = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<DistrictNew>(body);
+                result = JsonConvert.DeserializeObject<List<DistrictNew>>(body);
             }).Wait();
 
             return DataSourceLoader.Load((dynamic)result, loadOptions);
